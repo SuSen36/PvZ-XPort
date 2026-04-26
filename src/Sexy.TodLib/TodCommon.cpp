@@ -557,14 +557,18 @@ void TodDrawStringMatrix(Graphics* g, const _Font* theFont, const SexyMatrix3& t
 			aRenderCommand->mColor = aColor;
 			aRenderCommand->mDest[0] = anImageX;
 			aRenderCommand->mDest[1] = anImageY;
+
+			auto aCharRectItr = aKernItr->mScaledCharImageRects.find(aChar);
+			if (aCharRectItr == aKernItr->mScaledCharImageRects.end())
+				continue;
 			//aRenderCommand->mSrc[0] = aKernItr->mScaledCharImageRects[aChar].mX;
 			//aRenderCommand->mSrc[1] = aKernItr->mScaledCharImageRects[aChar].mY;
 			//aRenderCommand->mSrc[2] = aKernItr->mScaledCharImageRects[aChar].mWidth;
 			//aRenderCommand->mSrc[3] = aKernItr->mScaledCharImageRects[aChar].mHeight;
-			aRenderCommand->mSrc[0] = aKernItr->mScaledCharImageRects.find(aChar)->second.mX;
-			aRenderCommand->mSrc[1] = aKernItr->mScaledCharImageRects.find(aChar)->second.mY;
-			aRenderCommand->mSrc[2] = aKernItr->mScaledCharImageRects.find(aChar)->second.mWidth;
-			aRenderCommand->mSrc[3] = aKernItr->mScaledCharImageRects.find(aChar)->second.mHeight;
+			aRenderCommand->mSrc[0] = aCharRectItr->second.mX;
+			aRenderCommand->mSrc[1] = aCharRectItr->second.mY;
+			aRenderCommand->mSrc[2] = aCharRectItr->second.mWidth;
+			aRenderCommand->mSrc[3] = aCharRectItr->second.mHeight;
 			aRenderCommand->mMode = aLayer->mDrawMode;
 			aRenderCommand->mUseAlphaCorrection = aLayer->mUseAlphaCorrection;
 			aRenderCommand->mNext = nullptr;
