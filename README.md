@@ -6,165 +6,165 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wszqkzqk/PvZ-Portable)
 
-A **cross-platform** community-driven reimplementation of Plants vs. Zombies: Game of the Year Edition, aiming to bring the **100% authentic experience** of Plants vs. Zombies to every platform.
+一个**跨平台**、社区驱动的《植物大战僵尸：年度版》(Plants vs. Zombies: Game of the Year Edition) 重实现项目，旨在将植物大战僵尸**100% 原汁原味的体验**带给每一个平台。
 
-| 🌿 Authentic | 🎮 Portable | 🛠️ Open |
+| 🌿 原汁原味 | 🎮 便携式 | 🛠️ 开源 |
 | :---: | :---: | :---: |
-| Almost 100% gameplay recreation | Support for 32/64 bit systems<br>Run on Linux, Windows, macOS, Android, iOS, WebAssembly, Switch... | OpenGL ES 2.0 & SDL |
+| 几乎 100% 的游戏玩法还原 | 支持 32/64 位系统<br>可在 Linux、Windows、macOS、Android、iOS、WebAssembly、Switch 等平台运行 | OpenGL ES 2.0 & SDL |
 
-🌐 **No install wanted?** [Try directly in your browser!](https://wszqkzqk.github.io/pvz-portable-wasm/pvz-portable.html) (You still need your own game data files.)
+🌐 **不想安装？** [直接在浏览器中体验！](https://wszqkzqk.github.io/pvz-portable-wasm/pvz-portable.html)（你仍然需要自己的游戏数据文件。）
 
-**⚠️ Notice:**
+**⚠️ 注意事项：**
 
-* This repository does **NOT** contain any copyrighted game assets (such as images, music, or fonts) owned by PopCap Games or Electronic Arts. Users must provide their own `main.pak` and `properties/` folder from a **legally purchased copy** of Plants vs. Zombies: GOTY Edition.
-* The codebase is a manual reimplementation derived from community research (such as [植物大战僵尸吧](https://tieba.baidu.com/f?ie=utf-8&kw=%E6%A4%8D%E7%89%A9%E5%A4%A7%E6%88%98%E5%83%B5%E5%B0%B8), [PVZ Wiki](https://wiki.pvz1.com/doku.php?id=home) and [PvZ Tools](https://pvz.tools/memory/)). It is written to utilize portable backends like SDL2 and OpenGL ES 2.0 (with desktop OpenGL 2.1 fallback). The author (wszqkzqk) **NEVER reverse engineered** the program; the author wrote it solely based on publicly available information and game testing. Also, code generated directly through reverse engineering will **not be accepted**.
-* This project is intended solely for **educational purposes**, focusing on **cross-platform porting techniques**, engine modernization, and learning how classic game logic can be adapted to various hardware architectures (e.g., Nintendo Switch, 3DS).
-* Non-Commercial: This project is not affiliated with, authorized, or endorsed by PopCap Games or Electronic Arts.
-* Project icons and platform-specific logos are created by me (wszqkzqk) with the help of AI image generation tools and are not official assets of PopCap/EA.
-* To play the game using this project you **MUST** have access to the original game files by purchasing it on [EA's official website](https://www.ea.com/games/plants-vs-zombies/plants-vs-zombies) or [Steam](https://store.steampowered.com/app/3590/Plants_vs_Zombies_GOTY_Edition/).
+* 本仓库**不包含**任何 PopCap Games 或 Electronic Arts 拥有的版权游戏资源（如图像、音乐或字体）。用户必须从**合法购买的**《植物大战僵尸：年度版》副本中提供自己的 `main.pak` 和 `properties/` 文件夹。
+* 代码库是基于社区研究（如[植物大战僵尸吧](https://tieba.baidu.com/f?ie=utf-8&kw=%E6%A4%8D%E7%89%A9%E5%A4%A7%E6%88%98%E5%83%B5%E5%B0%B8)、[PVZ Wiki](https://wiki.pvz1.com/doku.php?id=home) 和 [PvZ Tools](https://pvz.tools/memory/)）的手动重实现。它使用 SDL2 和 OpenGL ES 2.0（兼容桌面端 OpenGL 2.1）等可移植后端编写。作者（wszqkzqk）**从未对程序进行逆向工程**；作者仅根据公开信息和游戏测试编写代码。此外，通过逆向工程直接生成的代码也**不会被接受**。
+* 本项目仅用于**教育目的**，专注于**跨平台移植技术**、引擎现代化，以及学习经典游戏逻辑如何适配各种硬件架构（如 Nintendo Switch、3DS）。
+* 非商业性：本项目未获得 PopCap Games 或 Electronic Arts 的关联、授权或认可。
+* 项目图标和平台特定标志由我（wszqkzqk）在 AI 图像生成工具的辅助下创建，并非 PopCap/EA 的官方资源。
+* 要使用本项目进行游戏，你**必须**通过在 [EA 官网](https://www.ea.com/games/plants-vs-zombies/plants-vs-zombies) 或 [Steam](https://store.steampowered.com/app/3590/Plants_vs_Zombies_GOTY_Edition/) 购买来获取原始游戏文件。
 
-## Features
+## 功能特性
 
-- [x] Render with SDL + OpenGL ES 2.0 (desktop OpenGL 2.1 fallback)
-  - Also enable to **resize the window**, which was not possible in the original game
-  - **Why OpenGL ES 2.0?** GLES 2.0 is the common subset of virtually all modern GPU APIs — every desktop OpenGL 2.1+ driver, mobile GPU, and game console inherently supports it. This means the game works **out of the box** everywhere without extra dependencies. [ANGLE](https://chromium.googlesource.com/angle/angle) can also be optionally used to translate calls to DirectX/Metal/Vulkan if needed.
-- [x] Implement a cross-platform audio system based on [SDL Mixer X](https://github.com/WohlSoft/SDL-Mixer-X)
-  - This project uses a fork of SDL Mixer X that adds compatibility with the MO3 format by using libopenmpt. This fork is located under SexyAppFramework/sound/SDL-Mixer-X
-- [x] Save more memory by disabling caching for console platforms that have very limited RAM
-- [x] **Compatible** with original PvZ GOTY Edition's ***global user data*** (profile info, adventure progress, coins, Zen Garden, etc., stored in `user*.dat`)
-  - [x] Fix 2038 year problem while keeping compatibility
-- [x] **Portable mid-level save game** format `.v4` support (share **mid-level saves** between Windows, Linux, macOS, Android, Switch, etc.)
-  - [x] Support export/import of `.v4` save files to/from human-readable YAML format for easy editing
-- [x] Implement with `std::thread` for cross-platform threading support
-- [x] Implement with `std::filesystem` for cross-platform file system support
-- [x] Unified use of UTF-8 encoding within the program
-- [x] **Multilingual Support**: Supports game resource data from official GOTY editions in various languages, including **Chinese, German, Spanish, French, and Italian**.
-- [x] 32 and 64-bit builds support
-- [x] Different CPU architectures support (i686, x86_64, aarch64, riscv64, loongarch64, etc.)
-- [x] Unicode path support on all platforms
-- [x] Different endianness support (little-endian and big-endian)
-  - [x] Save data compatibility across endianness
-  - Theoretically supports big-endian platforms, but untested due to lack of hardware
+- [x] 使用 SDL + OpenGL ES 2.0 渲染（桌面端 OpenGL 2.1 回退）
+  - 同时支持**调整窗口大小**，这是原版游戏所不具备的功能
+  - **为什么选择 OpenGL ES 2.0？** GLES 2.0 是几乎所有现代 GPU API 的公共子集——每个桌面端 OpenGL 2.1+ 驱动、移动端 GPU 和游戏主机都原生支持它。这意味着游戏可以在任何地方**开箱即用**，无需额外依赖。[ANGLE](https://chromium.googlesource.com/angle/angle) 也可以可选地用于将调用转换为 DirectX/Metal/Vulkan。
+- [x] 基于 [SDL Mixer X](https://github.com/WohlSoft/SDL-Mixer-X) 实现跨平台音频系统
+  - 本项目使用了 SDL Mixer X 的一个分支，该分支通过 libopenmpt 添加了对 MO3 格式的兼容性。此分支位于 SexyAppFramework/sound/SDL-Mixer-X
+- [x] 通过禁用缓存为内存极其有限的主机平台节省更多内存
+- [x] **兼容**原版 PvZ 年度版的***全局用户数据***（玩家信息、冒险进度、金币、禅境花园等，存储在 `user*.dat` 中）
+  - [x] 在保持兼容性的同时修复 2038 年问题
+- [x] **便携式关卡存档**格式 `.v4` 支持（在 Windows、Linux、macOS、Android、Switch 等平台之间**共享关卡存档**）
+  - [x] 支持将 `.v4` 存档文件导出/导入为人类可读的 YAML 格式，便于编辑
+- [x] 使用 `std::thread` 实现跨平台多线程支持
+- [x] 使用 `std::filesystem` 实现跨平台文件系统支持
+- [x] 程序内部统一使用 UTF-8 编码
+- [x] **多语言支持**：支持来自各种语言官方年度版的游戏资源数据，包括**中文、德语、西班牙语、法语和意大利语**。
+- [x] 32 位和 64 位构建支持
+- [x] 不同 CPU 架构支持（i686、x86_64、aarch64、riscv64、loongarch64 等）
+- [x] 所有平台的 Unicode 路径支持
+- [x] 不同字节序支持（小端和大端）
+  - [x] 跨字节序的存档数据兼容性
+  - 理论上支持大端平台，但由于缺乏硬件而未经测试
 
-This project supports the following platforms (including but not limited to):
+本项目支持以下平台（包括但不限于）：
 
-| Platform        | Data path                    | Status                                                                                 |
-|-----------------|------------------------------|----------------------------------------------------------------------------------------|
-| Linux           | Executable dir (resources); per-user app-data for writable files | Works                                                                                  |
-| Windows         | Executable dir (resources); per-user app-data for writable files | Works                                                                                  |
-| macOS           | Executable dir (resources); per-user app-data for writable files | Works                                                                                  |
-| BSD Family      | Executable dir (resources); per-user app-data for writable files | Works (verified at least on FreeBSD)                                                                               |
-| Haiku           | Executable dir (resources); per-user app-data for writable files | Partially works: no music                                                              |
-| Android         | `Android/data/io.github.wszqkzqk.pvzportable/files/` | Works                                                                                  |
-| iOS / iPadOS    | App Documents directory (Files app) | Works (sideload only; unsigned IPA)                                                    |
-| Web (WASM)      | Browser IndexedDB (saves); resources uploaded at runtime    | Works (requires a HTTP server) |
-| Nintendo Switch | sdmc:/switch/PvZPortable | Works on real hardware. Kenji-NX crashes on boot.                           |
-| Nintendo 3DS    | sdmc:/3ds/PvZPortable    | Might not have enough memory for Old 3DS and barely work on New 3DS (discontionued) |
+| 平台 | 数据路径 | 状态 |
+|------|----------|------|
+| Linux | 可执行文件目录（资源）；每用户应用数据路径用于可写文件 | ✅ 可用 |
+| Windows | 可执行文件目录（资源）；每用户应用数据路径用于可写文件 | ✅ 可用 |
+| macOS | 可执行文件目录（资源）；每用户应用数据路径用于可写文件 | ✅ 可用 |
+| BSD 系列 | 可执行文件目录（资源）；每用户应用数据路径用于可写文件 | ✅ 可用（至少在 FreeBSD 上验证过） |
+| Haiku | 可执行文件目录（资源）；每用户应用数据路径用于可写文件 | ⚠️ 部分可用：无音乐 |
+| Android | `Android/data/io.github.wszqkzqk.pvzportable/files/` | ✅ 可用 |
+| iOS / iPadOS | App Documents 目录（Files 应用） | ✅ 可用（仅限侧载；未签名 IPA） |
+| Web (WASM) | 浏览器 IndexedDB（存档）；运行时上传资源 | ✅ 可用（需要 HTTP 服务器） |
+| Nintendo Switch | sdmc:/switch/PvZPortable | ✅ 在真机上可用。Kenji-NX 启动时崩溃。 |
+| Nintendo 3DS | sdmc:/3ds/PvZPortable | ⚠️ Old 3DS 内存可能不足，New 3DS 勉强可用（已停止维护） |
 
-To play the game, you need the game data from PvZ GOTY. Place `main.pak` and the `properties/` folder next to the `pvz-portable` executable (the game will search for resources relative to the executable's directory). You can also use extracted data instead of `main.pak` if you prefer.
+要运行游戏，你需要 PvZ 年度版的游戏数据。将 `main.pak` 和 `properties/` 文件夹放在 `pvz-portable` 可执行文件旁边（游戏会相对于可执行文件的目录搜索资源）。如果你愿意，也可以使用解压的数据代替 `main.pak`。
 
-Note about writable data and caches:
+关于可写数据和缓存的说明：
 
-- The game will read resources (like `main.pak` and `properties/`) from the executable directory by default, so you can launch the binary from any working directory and it will still find them.
-- Per-user writable files (settings, savegames, compiled caches, screenshots) are stored in the **OS-recommended application data path**. With the current build these are under `io.github.wszqkzqk/PvZPortable` and include subfolders such as:
-  - `userdata/` — Player save files.
-  - `cache64/` if you use the 64-bit version or `cache32/` if you use the 32-bit version — Compiled binary caches (reanimation / compiled definitions). These caches are **local startup** artifacts (**native layout**), not portable files; when cache/schema checks fail, the game transparently recompiles from source data.
-  - `registry.regemu` — Settings/registry emulation.
+- 游戏默认从可执行文件目录读取资源（如 `main.pak` 和 `properties/`），因此你可以从任何工作目录启动二进制文件，它仍然能找到这些资源。
+- 每用户的可写文件（设置、存档、编译缓存、截图）存储在 **操作系统推荐的应用数据路径**中。当前构建下，这些位于 `io.github.wszqkzqk/PvZPortable` 下，包含以下子文件夹：
+  - `userdata/` — 玩家存档文件。
+  - `cache64/` 如果你使用 64 位版本，或 `cache32/` 如果你使用 32 位版本 — 编译后的二进制缓存（重新动画 / 编译定义）。这些缓存是**本地启动产物**（**原生布局**），不是可移植文件；当缓存/模式检查失败时，游戏会透明地从源数据重新编译。
+  - `registry.regemu` — 设置/注册表模拟。
 
-Examples:
+示例：
 
 - Linux: `~/.local/share/io.github.wszqkzqk/PvZPortable/`
 - Windows: `%APPDATA%\io.github.wszqkzqk\PvZPortable\`
 - macOS: `~/Library/Application Support/io.github.wszqkzqk/PvZPortable/`
 
-You can customize these paths via command-line parameters:
-- `-resdir="<path>"`: Set the **resource directory** (where `main.pak` and `properties/` are located). This only affects where the game looks for resources, not where it saves data.
-- `-savedir="<path>"`: Set the **save data directory** (where settings, savegames, caches, and screenshots are stored). This overrides the default OS-recommended application data path.
+你可以通过命令行参数自定义这些路径：
+- `-resdir="<path>"`：设置**资源目录**（`main.pak` 和 `properties/` 所在的位置）。这只影响游戏查找资源的位置，不影响保存数据的位置。
+- `-savedir="<path>"`：设置**存档数据目录**（设置、存档、缓存和截图的存储位置）。这将覆盖默认的操作系统推荐的应用数据路径。
 
-**Note:** You **MUST** use the format `-param="<Your Path>"`. Space-separated values (e.g. `-resdir path`) are **NOT** supported.
+**注意：** 你**必须**使用 `-param="<你的路径>"` 格式。空格分隔的值（如 `-resdir path`）**不被支持**。
 
-### Special Instructions for Android
+### Android 特别说明
 
-Download the APK from the [Releases](https://github.com/wszqkzqk/PvZ-Portable/releases) page or build it yourself. Because this project **does not include** any game assets, you will need to **import the game resources** from a **legally purchased copy** of Plants vs. Zombies: GOTY Edition.
+从 [Releases](https://github.com/wszqkzqk/PvZ-Portable/releases) 页面下载 APK 或自行构建。由于本项目**不包含**任何游戏资源，你需要从**合法购买的**《植物大战僵尸：年度版》副本中**导入游戏资源**。
 
-#### First Launch
+#### 首次启动
 
-1. **Install the APK** (you may need to enable "Install from unknown sources").
-2. **Launch the app** — since no game resources are found, a **resource import screen** will appear automatically.
-3. **Import game resources** by selecting either:
-   - A **ZIP file** containing `main.pak` and `properties/` (either at the ZIP root or inside one wrapper directory, e.g. `PvZ/main.pak`).
-   - A **folder** that directly contains `main.pak` and `properties/`, or whose immediate subfolder does.
-4. Press **Start Game** once the import succeeds.
+1. **安装 APK**（你可能需要启用"允许安装未知来源应用"）。
+2. **启动应用** — 由于没有找到游戏资源，**资源导入界面**将自动出现。
+3. **导入游戏资源**，选择以下任一方式：
+   - 包含 `main.pak` 和 `properties/` 的 **ZIP 文件**（可以在 ZIP 根目录或一个包装目录内，例如 `PvZ/main.pak`）。
+   - 直接包含 `main.pak` 和 `properties/` 的**文件夹**，或其直接子文件夹包含这些文件。
+4. 导入成功后点击**开始游戏**。
 
-#### Managing Data Later
+#### 后续管理数据
 
-Long-press the app icon on your launcher to access the **Manage Data** shortcut, which opens the resource management screen where you can re-import resources, export saves, or import saves.
+长按启动器上的应用图标以访问**管理数据**快捷方式，这将打开资源管理界面，你可以重新导入资源、导出存档或导入存档。
 
-#### Notes
+#### 注意
 
-- Requires Android 9.0+. The prebuilt APK is arm64-v8a only, but **you can build for other architectures** if needed.
-- All data is stored in `Android/data/io.github.wszqkzqk.pvzportable/files/`. No extra storage permissions are needed — the app uses the **Storage Access Framework (SAF)** for all imports and exports.
-- Save data is interchangeable with desktop versions. See the [save data section](#save-data-compatibility-user-data-and-mid-level-saves) chapter for details.
-- The Android port is part of this project's **cross-platform porting research**. It preserves the original game's 4:3 aspect ratio and mouse-based input model — **no touch-screen-specific UI optimizations have been made**. SDL2 automatically maps touch events to mouse input, so the game is playable but not designed for mobile ergonomics.
+- 需要 Android 9.0+。预构建的 APK 仅限 arm64-v8a，但**你可以根据需要为其他架构构建**。
+- 所有数据存储在 `Android/data/io.github.wszqkzqk.pvzportable/files/` 中。不需要额外的存储权限 — 应用对所有导入和导出操作都使用**存储访问框架 (SAF)**。
+- 存档数据与桌面版本互通。详情请参阅[存档数据兼容性章节](#save-data-compatibility-user-data-and-mid-level-saves)。
+- Android 移植是本项目**跨平台移植研究**的一部分。它保留了原始游戏的 4:3 宽高比和基于鼠标的输入模型 — **没有针对触摸屏进行 UI 优化**。SDL2 会自动将触摸事件映射到鼠标输入，因此游戏可以游玩但并非为移动端人体工程学设计。
 
-### Special Instructions for iOS / iPadOS
+### iOS / iPadOS 特别说明
 
-Download the unsigned IPA from the [Releases](https://github.com/wszqkzqk/PvZ-Portable/releases) page or build it yourself with `ios/build-ios.sh`. The IPA must be sideloaded — common methods include [AltStore](https://altstore.io/), [TrollStore](https://github.com/opa334/TrollStore), or deploying directly from Xcode with a free Apple ID.
+从 [Releases](https://github.com/wszqkzqk/PvZ-Portable/releases) 页面下载未签名的 IPA，或使用 `ios/build-ios.sh` 自行构建。IPA 必须侧载 — 常见方法包括 [AltStore](https://altstore.io/)、[TrollStore](https://github.com/opa334/TrollStore)，或通过免费 Apple ID 直接从 Xcode 部署。
 
-#### Importing Game Resources
+#### 导入游戏资源
 
-The app's Documents folder is exposed via iTunes/Finder file sharing and the iOS Files app (`UIFileSharingEnabled`). Place `main.pak` and the `properties/` folder directly into the app's Documents directory (shown as "PvZ Portable" in the Files app).
+应用的 Documents 文件夹通过 iTunes/Finder 文件共享和 iOS Files 应用暴露（`UIFileSharingEnabled`）。将 `main.pak` 和 `properties/` 文件夹直接放入应用的 Documents 目录中（在 Files 应用中显示为 "PvZ Portable"）。
 
-#### Notes
+#### 注意
 
-- Requires iOS 15.0+ (arm64).
-- Free Apple ID signatures expire after 7 days; TrollStore installs are permanent.
-- Same touch-to-mouse mapping and aspect ratio behavior as the Android port.
+- 需要 iOS 15.0+ (arm64)。
+- 免费 Apple ID 签名将在 7 天后过期；TrollStore 安装是永久的。
+- 与 Android 移植相同的触摸转鼠标映射和宽高比行为。
 
-### Play in Your Browser (WebAssembly)
+### 在浏览器中运行 (WebAssembly)
 
-**[▶ Play Online](https://wszqkzqk.github.io/pvz-portable-wasm/pvz-portable.html)** — open the link, load your legally purchased game resources either from a ZIP package or from `main.pak` plus the `properties/` folder, then click **Start Game**. All files stay in your browser locally and are **never uploaded to any server** (the hosting site is purely static). Save data is stored in your browser's IndexedDB and can be imported from ZIP or folder, or exported as a ZIP via the on-screen buttons.
+**[▶ 在线体验](https://wszqkzqk.github.io/pvz-portable-wasm/pvz-portable.html)** — 打开链接，从 ZIP 包或 `main.pak` 加上 `properties/` 文件夹加载你合法购买的游戏资源，然后点击**开始游戏**。所有文件保留在你的浏览器本地，**永远不会上传到任何服务器**（托管站点纯粹是静态的）。存档数据存储在你浏览器的 IndexedDB 中，可以通过屏幕上的按钮从 ZIP 或文件夹导入，或导出为 ZIP。
 
-You can also [download the WASM build](https://github.com/wszqkzqk/PvZ-Portable/releases) and self-host it. Note that the HTML file must be served over HTTP (e.g. `python3 -m http.server`) — opening it directly as a local file will not work due to browser security restrictions.
+你也可以[下载 WASM 构建](https://github.com/wszqkzqk/PvZ-Portable/releases) 并自行托管。注意 HTML 文件必须通过 HTTP 提供服务（例如 `python3 -m http.server`）— 由于浏览器安全限制，直接作为本地文件打开将无法工作。
 
-## Game Version Compatibility
+## 游戏版本兼容性
 
-This project is designed and tested against Plants vs. Zombies **GOTY Edition 1.2.0.1073** EN (the standalone PopCap release). **Non-English GOTY editions** (1.2.0.1093 DE/ES/FR/IT or 1.1.0.1056 ZH based on 1.2.0.1073) and the **Steam GOTY Edition 1.2.0.1096** are also fully playable — all game mechanics work correctly. The only differences are minor cosmetic UI text issues caused by renamed string keys across versions, and these can be **easily fixed** by the user via a custom `properties/default.xml` (see below).
+本项目针对《植物大战僵尸》**年度版 1.2.0.1073 英文版**（独立的 PopCap 发行版）设计和测试。**非英文年度版**（基于 1.2.0.1073 的 1.2.0.1093 德语/西班牙语/法语/意大利语版或 1.1.0.1056 中文版）以及 **Steam 年度版 1.2.0.1096** 也完全可以游玩 — 所有游戏机制都能正常工作。唯一的区别是由于不同版本间字符串键重命名导致的轻微 UI 文本外观问题，这些问题可以**轻松修复**，只需用户通过自定义 `properties/default.xml`（见下方）即可。
 
-**Recommendation:** use the **1.2.0.1073 EN** asset package for the best **out-of-box** experience.
+**建议：** 使用 **1.2.0.1073 英文版**资源包以获得最佳的**开箱即用**体验。
 
 <details>
-<summary>Known cosmetic differences with non-1.2.0.1073 EN assets (click to expand)</summary>
+<summary>已知与非 1.2.0.1073 英文版资源的视觉差异（点击展开）</summary>
 
-| Issue (Non-1.2.0.1073 EN only) | Cause |
+| 问题（仅限非 1.2.0.1073 英文版） | 原因 |
 | :---: | :---: |
-| **Almanac blue description text missing** | In 1.2.0.1096, the plain-text introductory paragraph was split out from `[XXX_DESCRIPTION]` into a new `[XXX_DESCRIPTION_HEADER]` key. The engine only reads `[XXX_DESCRIPTION]`, so the header text is never displayed. |
-| **"Restart" button label missing** | The key `[RESTART_LEVEL]` (used for the button label) was renamed to `[RESTART_LEVEL_BUTTON]` in 1.2.0.1096. |
-| **Unencountered zombie shows `???`** instead of `(not encountered yet)` | The string `[NOT_ENCOUNTERED_YET]` changed its value to `???` in 1.2.0.1096; the old text was moved to a new key `[NOT_ENCOUNTERED_YET_DESCRIPTION]`. |
-| **Crazy Dave's plant sell price shows 1/10 of the correct value** | In 1.2.0.1073, the string template `[CRAZY_DAVE_1700]` contains a trailing `0` after `{SELL_PRICE}` (i.e. `${SELL_PRICE}0`) because the engine passes the price divided by 10. In 1.2.0.1096 the trailing `0` was removed, so the displayed price becomes 1/10 of the intended amount. |
+| **图鉴蓝色描述文本缺失** | 在 1.2.0.1096 中，纯文本介绍段落从 `[XXX_DESCRIPTION]` 中分离出来，移到了新的 `[XXX_DESCRIPTION_HEADER]` 键。引擎只读取 `[XXX_DESCRIPTION]`，所以标题文本从未显示。 |
+| **"重新开始"按钮标签缺失** | 用于按钮标签的键 `[RESTART_LEVEL]` 在 1.2.0.1096 中被重命名为 `[RESTART_LEVEL_BUTTON]`。 |
+| **未遇到的僵尸显示 `???`** 而非 `(尚未遇到)` | 字符串 `[NOT_ENCOUNTERED_YET]` 的值在 1.2.0.1096 中更改为 `???`；旧文本被移到了新键 `[NOT_ENCOUNTERED_YET_DESCRIPTION]`。 |
+| **疯狂戴夫的植物出售价格显示为正确值的 1/10** | 在 1.2.0.1073 中，字符串模板 `[CRAZY_DAVE_1700]` 在 `{SELL_PRICE}` 后包含尾随的 `0`（即 `${SELL_PRICE}0`），因为引擎传递的是除以 10 后的价格。在 1.2.0.1096 中尾随的 `0` 被移除了，所以显示的价格变成了预期金额的 1/10。 |
 
-All of the above can be resolved by adding the missing or corrected string entries to a `properties/default.xml` file placed alongside the game data.
+以上所有问题都可以通过在与游戏数据一起放置的 `properties/default.xml` 文件中添加缺失或修正的字符串条目来解决。
 </details>
 
-### Multilingual Support
+### 多语言支持
 
-PvZ-Portable supports game resource data from **non-English versions** of Plants vs. Zombies **GOTY Edition**. The engine handles BOM-encoded text files and converts legacy Windows-1252 encodings to UTF-8, so localized files will be loaded correctly. If `properties/default.xml` and/or `properties/Layout.xml` exist in the game data, they are loaded **after** `LawnStrings.txt` and can override any string value. Both files are optional; when absent, built-in English defaults are used.
+PvZ-Portable 支持来自**非英文版**《植物大战僵尸》**年度版**的游戏资源数据。引擎处理 BOM 编码的文本文件并将传统的 Windows-1252 编码转换为 UTF-8，因此本地化文件将被正确加载。如果游戏数据中存在 `properties/default.xml` 和/或 `properties/Layout.xml`，它们将在 `LawnStrings.txt` **之后**加载，并且可以覆盖任何字符串值。这两个文件都是可选的；当不存在时，使用内置的英文默认值。
 
-Since `default.xml` takes priority over `LawnStrings.txt`, users can also **create or edit their own `properties/default.xml`** to add or override any string key, making it easy to fix version-specific display issues without modifying the engine.
+由于 `default.xml` 的优先级高于 `LawnStrings.txt`，用户也可以**创建或编辑自己的 `properties/default.xml`** 来添加或覆盖任何字符串键，从而无需修改引擎即可轻松修复特定版本的显示问题。
 
-## Dependencies
+## 依赖项
 
-Before building on PC, ensure you have the necessary dependencies installed:
+在 PC 上构建之前，确保已安装必要的依赖项：
 
-- **Build Tools**: `CMake`, `Ninja`, A C/C++ compiler (e.g., `gcc`, `clang`, `MSVC`) supporting **C++20** (Also need a standard library implementation like `libstdc++`, `libc++` or MSVC STL that supports C++20)
-- **Graphics**: `OpenGL ES 2.0` or `OpenGL 2.1+` (auto-detected at runtime via SDL2)
-- **Audio**: `libopenmpt`, `libogg`, `libvorbis`, `mpg123`
-- **Image**: `libpng`, `libjpeg-turbo`
-- **Windowing/Input**: `SDL2`
+- **构建工具**：`CMake`、`Ninja`、支持 **C++20** 的 C/C++ 编译器（例如 `gcc`、`clang`、`MSVC`）（还需要支持 C++20 的标准库实现，如 `libstdc++`、`libc++` 或 MSVC STL）
+- **图形**：`OpenGL ES 2.0` 或 `OpenGL 2.1+`（通过 SDL2 在运行时自动检测）
+- **音频**：`libopenmpt`、`libogg`、`libvorbis`、`mpg123`
+- **图像**：`libpng`、`libjpeg-turbo`
+- **窗口/输入**：`SDL2`
 
 ### Arch Linux
 
-You can install the required dependencies using the following command:
+你可以使用以下命令安装所需的依赖项：
 
 ```bash
 sudo pacman -S --needed base-devel cmake libjpeg-turbo libogg libopenmpt libpng libvorbis mpg123 ninja sdl2-compat
@@ -172,7 +172,7 @@ sudo pacman -S --needed base-devel cmake libjpeg-turbo libogg libopenmpt libpng 
 
 ### Debian/Ubuntu
 
-You can install the required dependencies using the following command:
+你可以使用以下命令安装所需的依赖项：
 
 ```bash
 sudo apt install cmake ninja-build libogg-dev libjpeg-dev libopenmpt-dev libpng-dev libvorbis-dev libmpg123-dev libsdl2-dev
@@ -180,7 +180,7 @@ sudo apt install cmake ninja-build libogg-dev libjpeg-dev libopenmpt-dev libpng-
 
 ### Windows (MSYS2 UCRT64)
 
-You can install the required dependencies using the following command:
+你可以使用以下命令安装所需的依赖项：
 
 ```bash
 pacman -S --needed base-devel mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-libjpeg-turbo mingw-w64-ucrt-x86_64-libopenmpt mingw-w64-ucrt-x86_64-libogg mingw-w64-ucrt-x86_64-libpng mingw-w64-ucrt-x86_64-libvorbis mingw-w64-ucrt-x86_64-mpg123 mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-SDL2
@@ -188,15 +188,15 @@ pacman -S --needed base-devel mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-
 
 ### macOS (Homebrew)
 
-You can install the required dependencies using [Homebrew](https://brew.sh/) with the following command:
+你可以使用 [Homebrew](https://brew.sh/) 安装所需依赖项：
 
 ```bash
 brew install cmake dylibbundler jpeg-turbo libogg libopenmpt libpng libvorbis mpg123 ninja sdl2
 ```
 
-## Build Instructions
+## 构建说明
 
-Run the following commands (assuming you have CMake and other dependencies installed) where the `CMakeLists.txt` file is located:
+在 `CMakeLists.txt` 文件所在的位置运行以下命令（假设已安装 CMake 和其他依赖项）：
 
 ```bash
 cmake -G Ninja -B build
@@ -206,147 +206,72 @@ cmake -G Ninja -B build
 cmake --build build
 ```
 
-### Performance Optimization
+### 性能优化
 
-It is recommended to use the **Release** build type for the best performance, as it usually implies compiler optimizations:
+建议使用 **Release** 构建类型以获得最佳性能，因为这通常意味着编译器优化：
 
 ```bash
 cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
-For advanced users, you can also specify `CFLAGS` and `CXXFLAGS` to enable architecture-specific optimizations (e.g. `-march=native` to fully utilize your CPU's instruction set):
+对于高级用户，你也可以指定 `CFLAGS` 和 `CXXFLAGS` 来启用架构特定的优化（例如 `-march=native` 以充分利用 CPU 的指令集）：
 
 ```bash
 cmake -G Ninja -B build -DCMAKE_C_FLAGS="-march=native" -DCMAKE_CXX_FLAGS="-march=native" -DCMAKE_BUILD_TYPE=Release
 ```
 
-### Configuration Options
+### 配置选项
 
-You can customize the game features by adding options to the first `cmake` command:
+你可以通过在第一个 `cmake` 命令中添加选项来自定义游戏功能：
 
-| Option | Default | Description |
-| :--- | :--- | :--- |
-| `PVZ_DEBUG` | `OFF`<br>(`ON` if `CMAKE_BUILD_TYPE` is `Debug`) | Enable **cheat keys**, debug displays and other debug features. |
-| `LIMBO_PAGE` | `ON` | Enable access to the limbo page which contains hidden levels. |
-| `DO_FIX_BUGS` | `OFF` | Apply community fixes for "bugs" of official 1.2.0.1073 GOTY Edition.[^1] However, these "bugs" are usually **considered "features"** by many players. |
-| `CONSOLE` | `OFF`<br>(`ON` if `CMAKE_BUILD_TYPE` is `Debug`) | Show a console window (Windows only). |
-| `BUILD_STATIC` | `OFF` | Link statically to create a standalone executable (Windows with MinGW-based toolchains only). Use a vcpkg `-static` triplet for MSVC instead. |
+| 选项             | 默认值                                                 | 描述                                                                        |
+|:---------------|:-------------------------------------------------------|:----------------------------------------------------------------------------|
+| `PVZ_DEBUG`    | `OFF`<br>(当 `CMAKE_BUILD_TYPE` 为 `Debug` 时为 `ON`)   | 启用**作弊键**、调试显示和其他调试功能。                                                    |
+| `LIMBO_PAGE`   | `ON`                                                   | 启用对包含隐藏关卡的 limbo 页面的访问。                                                   |
+| `DO_FIX_BUGS`  | `OFF`                                                  | 对官方 1.2.0.1073 年度版的"bug"应用社区修复。[^1] 然而，这些"bug"通常被许多玩家**视为"特性"**。 |
+| `CONSOLE`      | `OFF`<br>(当 `CMAKE_BUILD_TYPE` 为 `Debug` 时为 `ON`)   | 显示控制台窗口（仅限 Windows）。                                                      |
+| `BUILD_STATIC` | `OFF`                                                  | 静态链接以创建独立可执行文件（仅限基于 MinGW 工具链的 Windows）。MSVC 请改用 vcpkg `-static` triplet。 |
 
-[^1]: Current `DO_FIX_BUGS` includes the following fixes:
-    - Fix bungee zombie duplicate sun/item drop in I, Zombie mode.
-    - Make mind-controlled Gargantuars smash enemy zombies instead of plants.
-    - Make mind-controlled Gargantuars throw mind-controlled Imps (with scale, health, and direction fixes).
-    - Make mind-controlled Gargantuars can smash vases in Scary Potter mode.
-    - Make mind-controlled Pea/Gatling Head zombies shoot forward instead of backward.
-    - Make mind-controlled Jalapeno/Squash zombies damage enemy zombies instead of plants.
-    - Coordinate fixes for mind-controlled Squash zombies tracking and smashing enemy zombies.
-    - Make mind-controlled Jalapeno zombies correctly clear Dr. Zomboss' skills (Iceball/Fireball) and ladder logic.
-    - Sync Dancer Zombie animations (fixes "Maid" displacement bug).
-    - Fix visual glitch of Ladder Zombie's arm recovery.
-    - Fix Dr. Zomboss' attack (RV, Fireball/Iceball) and summon range coverage for 6-lane (Pool) levels.
+[^1]: 当前 `DO_FIX_BUGS` 包含以下修复：
+    - 修复蹦极僵尸在"我是僵尸"模式下重复掉落阳光/物品的问题。
+    - 使魅惑的巨人砸向敌方僵尸而非植物。
+    - 使魅惑的巨人投掷魅惑的小鬼僵尸（修复缩放、生命值和方向问题）。
+    - 使魅惑的巨人能够在"砸罐子"模式中砸碎罐子。
+    - 使魅惑的豌豆/加特林头僵尸向前射击而非向后射击。
+    - 使魅惑的火爆辣椒/窝瓜僵尸伤害敌方僵尸而非植物。
+    - 修复魅惑窝瓜僵尸追踪和砸向敌方僵尸的坐标问题。
+    - 使魅惑的火爆辣椒僵尸正确清除僵王博士的技能（冰球/火球）和梯子逻辑。
+    - 同步舞王僵尸动画（修复"女仆"位移 bug）。
+    - 修复梯子僵尸手臂恢复的视觉故障。
+    - 修复僵王博士的攻击（房车、火球/冰球）和召唤范围覆盖 6 泳道（泳池）关卡的问题。
 
-Example: Manually enable `PVZ_DEBUG` in **Release build** so that you can use **cheat keys** while having optimized performance:
+示例：在 **Release 构建**中手动启用 `PVZ_DEBUG`，以便在使用优化性能的同时使用**作弊键**：
 
 ```bash
 cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DPVZ_DEBUG=ON
 ```
 
-If running these commands does not create a successful build please create an issue and detail your problem.
+如果运行这些命令未能成功构建，请创建 issue 并详细描述你的问题。
 
-## Save data compatibility (user data and mid-level saves)
+## 存档数据兼容性（用户数据和关卡存档）
 
-PvZ-Portable uses two distinct types of save data:
+PvZ-Portable 使用两种不同类型的存档数据：
 
-1.  **Global User Data** (`users.dat`, `user1.dat`, etc.):
-    *   Stores profile info, adventure progress, coins, Zen Garden, etc.
-    *   **Fully compatible** with the original PC game format.
-    *   Already portable by design (uses explicit serialization).
+1.  **全局用户数据**（`users.dat`、`user1.dat` 等）：
+    *   存储玩家信息、冒险进度、金币、禅境花园等。
+    *   **完全兼容**原版 PC 游戏格式。
+    *   设计上已经是可移植的（使用显式序列化）。
 
-2.  **Mid-Level Save States** (`game1_0.v4`, etc. legacy `game1_0.dat`, etc.):
-    *   Stores the exact state of a level when "Save and Exit" is used (zombies, projectiles, plants, etc.).
-    *   The game now writes **only** `*.v4` files by default:
-        *   `*.v4` files: **Portable format**. Sharing these files to transfer progress between different platforms is fully **supported**.
-        *   `*.dat` files: **Legacy dump** from old versions. Contains raw memory dumps. **Do not share this file** across platforms as it will cause crashes due to architecture differences.
-    *   When loading, the game **prefers** `.v4`; `*.dat` is fallback-only for migration compatibility.
-    *   If a save is loaded from legacy `*.dat`, the game automatically re-saves it to `*.v4` and removes the legacy `*.dat` after successful migration.
+2.  **关卡存档状态**（`game1_0.v4` 等，旧版 `game1_0.dat` 等）：
+    *   存储"保存并退出"使用时关卡的精确状态（僵尸、投射物、植物等）。
+    *   游戏现在默认**只**写入 `*.v4` 文件：
+        *   `*.v4` 文件：**便携式格式**。在不同平台之间分享这些文件以传输进度是完全**支持的**。
+        *   `*.v4` 文件可以使用随附脚本 `scripts/pvzp-v4-converter.py` 导出/导入为人类可读的 YAML 格式以便编辑。
 
-### Why a new mid-level save format?
+## 许可证
 
-The original game's mid-level save format (`.dat`) effectively dumps raw memory structures to disk. This is fast but fragile, as it relies on specific memory layouts that break across:
+本项目的源代码根据 [GPL v3.0 License](LICENSE) 分发。
 
-*   **Different CPU Architectures**: x86, ARM, RISC-V, LoongArch (alignment).
-*   **32-bit vs 64-bit builds**: Pointer sizes and struct layouts differ.
-*   **Different Compilers**: MSVC vs GCC/Clang (padding, enum size, struct packing).
+## 致谢
 
-As a result, legacy saves are generally not guaranteed to load across those variants. To solve this, **Format v4** serializes game objects field-by-field using Type-Length-Value (TLV) tags. This ensures that a level saved on a x86_64 Linux machine can be loaded on a LoongArch or ARM (Switch) machine without crashing.
-
-### Developer Guidelines for Format v4
-
-- Add new fields as new TLV IDs; do not reuse IDs.
-- Keep defaults for missing fields when loading older saves.
-- Avoid raw struct dumps for data that may change layout; prefer explicit per-field sync with fixed-width primitives.
-
-### Save Editing & Conversion Tool
-
-There's a Python script `scripts/pvzp-v4-converter.py` to inspect and modify `.v4` save files. 
-
-**Features:**
-*   **Info**: View basic save stats (Wave, Sun, Zombies, etc.).
-*   **Export to YAML**: Convert binary `.v4` files to human-readable YAML to view/edit gameplay-relevant data.
-*   **Import from YAML**: Convert modified YAML back to `.v4` format with correct checksums.
-
-**Usage:**
-```bash
-# Modify these paths as needed
-# View basic info
-python scripts/pvzp-v4-converter.py info ~/.local/io.github.wszqkzqk/PvZPortable/userdata/game1_13.v4
-
-# Export to YAML for editing
-python scripts/pvzp-v4-converter.py export ~/.local/io.github.wszqkzqk/PvZPortable/userdata/game1_13.v4 level.yaml
-
-# Import back to savegame
-# **BACKUP** your original .v4 file fist!
-mv ~/.local/io.github.wszqkzqk/PvZPortable/userdata/game1_13.v4 ~/.local/io.github.wszqkzqk/PvZPortable/userdata/game1_13.v4.bak
-python scripts/pvzp-v4-converter.py import level.yaml ~/.local/io.github.wszqkzqk/PvZPortable/userdata/game1_13.v4
-```
-
-## Contributing
-
-When contributing please follow the following guides:
-
-<details><summary>SexyAppFramework coding philosophy</summary>
-
-### From the SexyAppFramework docs:
-
-<br>
-The framework differs from many other APIs in that some class properties are not wrapped in accessor methods, but rather are made to be accessed directly through public member data.   The window caption of your application, for example, is set by assigning a value to the std::string mTitle in the application object before the application’s window is created.  We felt that in many cases this reduced the code required to implement a class.  Also of note is the prefix notation used on variables: “m” denotes a class member, “the” denotes a parameter passed to a method or function, and “a” denotes a local variable.
-</br>
-</details>
-
-## License
-
-**Copyright (C) 2026 Zhou Qiankang <wszqkzqk@qq.com>**
-
-This project is licensed under the terms of the [**GNU Lesser General Public License v3.0**](https://www.gnu.org/licenses/lgpl-3.0.html) or later (LGPL-3.0-or-later).
-
-* The repository includes complete license texts at the root:
-  * `LICENSE` — LGPL-3.0 text
-  * `COPYING` — GPL-3.0 text, referenced by LGPL-3.0
-* The code is provided "as is", **WITHOUT WARRANTY** of any kind.
-* The **original game IP (Plants vs. Zombies) belongs to PopCap/EA**. This license applies **only to the code implementation** in this repository.
-* This project does **NOT** include any copyrighted assets from the original game.
-
-### PopCap Games Framework Acknowledgment
-
-The `SexyAppFramework` directory may contain code originally based on the **PopCap Games Framework**. This code is subject to the permissive **[PopCap Games Framework License](src/SexyAppFramework/LICENSE)**. To the extent that original code remains, the following acknowledgment applies:
-
-> "This product includes portions of the PopCap Games Framework, © 2005-2009 PopCap Games, Inc.  All rights reserved. (http://popcapframework.sourceforge.net/)."
-
-Note that this code has been **heavily refactored**, **optimized** and **modernized** by the community over time under the **LGPL-3.0-or-later** license.
-
-## Thanks
-
-- **PopCap Games**: For creating the amazing game and releasing their framework to the public with a permissive license.
-- **The SDL Team**: For the amazing cross-platform development library that powers this port.
-- **The OpenMPT Team**: For libopenmpt, enabling high-quality MO3 music playback.
-- All the contributors who have worked or are actively working in this amazing project, especially [@Headshotnoby](https://www.github.com/headshot2017) and [@Patoke](https://www.github.com/Patoke) for their groundwork.
+- 所有在这个精彩项目中工作过或正在积极工作的贡献者，特别是 [@Headshotnoby](https://www.github.com/headshot2017) 和 [@Patoke](https://www.github.com/Patoke) 他们的基础工作。
