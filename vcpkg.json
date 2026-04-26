@@ -2,7 +2,10 @@
   "dependencies": [
     "libjpeg-turbo",
     "libogg",
-    "libopenmpt",
+    {
+      "name": "libopenmpt",
+      "version>=": "0.8.6"
+    },
     "libpng",
     "libvorbis",
     "mpg123",

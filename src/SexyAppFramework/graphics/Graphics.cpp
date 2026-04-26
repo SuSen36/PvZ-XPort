@@ -672,6 +672,9 @@ void Graphics::DrawString(const std::string& theString, int theX, int theY)
 
 void Graphics::DrawImage(Sexy::Image* theImage, int theX, int theY)
 {
+	if (theImage == nullptr)
+		return;
+
 	if (mScaleX!=1 || mScaleY!=1)
 	{
 		DrawImage(theImage,theX,theY,Rect(0,0,theImage->mWidth,theImage->mHeight));
@@ -690,6 +693,9 @@ void Graphics::DrawImage(Sexy::Image* theImage, int theX, int theY)
 
 void Graphics::DrawImage(Image* theImage, int theX, int theY, const Rect& theSrcRect)
 {
+	if (theImage == nullptr)
+		return;
+
 	DBG_ASSERTE(theSrcRect.mX + theSrcRect.mWidth <= theImage->GetWidth());	
 	DBG_ASSERTE(theSrcRect.mY + theSrcRect.mHeight <= theImage->GetHeight());	
 
@@ -716,11 +722,17 @@ void Graphics::DrawImage(Image* theImage, int theX, int theY, const Rect& theSrc
 
 void Graphics::DrawImageMirror(Image* theImage, int theX, int theY, bool mirror)
 {
+	if (theImage == nullptr)
+		return;
+
 	DrawImageMirror(theImage,theX,theY,Rect(0,0,theImage->mWidth,theImage->mHeight),mirror);
 }
 
 void Graphics::DrawImageMirror(Image* theImage, int theX, int theY, const Rect& theSrcRect, bool mirror)
 {
+	if (theImage == nullptr)
+		return;
+
 	if (!mirror)
 	{
 		DrawImage(theImage, theX, theY, theSrcRect);
@@ -751,6 +763,9 @@ void Graphics::DrawImageMirror(Image* theImage, int theX, int theY, const Rect& 
 
 void Graphics::DrawImageMirror(Image* theImage, const Rect& theDestRect, const Rect& theSrcRect, bool mirror)
 {
+	if (theImage == nullptr)
+		return;
+
 	if (!mirror)
 	{
 		DrawImage(theImage,theDestRect,theSrcRect);
@@ -765,6 +780,9 @@ void Graphics::DrawImageMirror(Image* theImage, const Rect& theDestRect, const R
 
 void Graphics::DrawImage(Image* theImage, int theX, int theY, int theStretchedWidth, int theStretchedHeight)
 {
+	if (theImage == nullptr)
+		return;
+
 	Rect aDestRect = Rect(theX + mTransX, theY + mTransY, theStretchedWidth, theStretchedHeight);
 	Rect aSrcRect = Rect(0, 0, theImage->mWidth, theImage->mHeight);
 

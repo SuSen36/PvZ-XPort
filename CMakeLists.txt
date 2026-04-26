@@ -23,10 +23,11 @@ if (CMAKE_GENERATOR MATCHES "Ninja")
 endif()
 
 if(MSVC)
+	add_compile_options(/MP)
 	if(DEFINED VCPKG_TARGET_TRIPLET AND VCPKG_TARGET_TRIPLET MATCHES "-static")
 		set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 	elseif(DEFINED VCPKG_TARGET_TRIPLET)
-		set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL$<$<CONFIG:Debug>:Debug>")
+		set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 	endif()
 endif()
 
