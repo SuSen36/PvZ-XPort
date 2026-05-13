@@ -1,6 +1,6 @@
 ---
 name: testing-pvz-xport-cmake
-description: Test PvZ-XPort CMake builds, resource packing/staging, and vcpkg dependency detection. Use when validating resource pipeline, desktop builds, or Windows CLion/vcpkg dependency fixes.
+description: Test PvZ-XPort CMake builds, resource packing/staging, and vcpkg dependency detection. Use when validating resource pipeline, desktop builds, Windows CLion/vcpkg dependency fixes, or simplified audio dependency changes.
 ---
 
 # PvZ-XPort CMake / Resource / vcpkg Testing
@@ -42,11 +42,30 @@ Expected:
 - `git diff --check` exits 0.
 - Working tree is clean except intentional edits.
 
+## Simplified audio dependency checks
+
+Use this when validating changes that reduce required audio packages. The default build should use SDL Mixer X built-in codecs and should not require `libogg`, `libvorbis`, `mpg123`, or `libopenmpt`.
+
+```bash
+cmake -S /path/to/PvZ-XPort \
+  -B /path/to/PvZ-XPort/build-audio-default \
+  -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DPVZ_AUTO_PACK_RESOURCES=OFF 2>&1 | tee /tmp/pvz-audio-default-configure.log
+cmake --build /path/to/PvZ-XPort/build-audio-default --target pvz-portable -j$(nproc)
+```
+
+Expected:
+- Configure exits 0.
+- The configure log contains `== using STB-Vorbis` and `== using DRMP3`.
+- The configure/build logs do not contain `VorbisConfig.cmake`, `Could not find OGG_LIBRARY`, or `Could not find a package configuration file provided by "Vorbis"`.
+- The configure summary shows `MPG123 is disabled` and, unless explicitly enabled, `OpenMPT is disabled`.
+
 ## vcpkg / CLion dependency detection simulation
 
-Use this when validating fixes for Windows commands that pass `-DCMAKE_TOOLCHAIN_FILE=.../vcpkg.cmake`.
+Use this when validating Windows commands that pass `-DCMAKE_TOOLCHAIN_FILE=.../vcpkg.cmake`.
 
-On Linux, create a fake toolchain path to prove the project selects the vcpkg CONFIG-package branch:
+On Linux, create a fake toolchain path to prove the project detects the vcpkg toolchain path without requiring a real Windows setup:
 
 ```bash
 mkdir -p /home/ubuntu/pvz-vcpkg-fake/scripts/buildsystems
@@ -58,14 +77,37 @@ cmake -S /path/to/PvZ-XPort \
   -DPVZ_AUTO_PACK_RESOURCES=OFF 2>&1 | tee /home/ubuntu/pvz-vcpkg-fake/configure.log
 ```
 
-Expected in a fake toolchain environment:
-- Configure exits non-zero because no real vcpkg package configs exist.
-- The log contains `Could not find a package configuration file provided by "Vorbis"`.
-- The log does **not** contain `Could not find OGG_LIBRARY`.
+Expected after simplified audio dependency changes:
+- Configure exits 0.
+- The log contains `== using STB-Vorbis` and `== using DRMP3`.
+- The log does **not** contain `Could not find OGG_LIBRARY` or `Could not find a package configuration file provided by "Vorbis"`.
+- `build-vcpkg-toolchain-path-test/CMakeCache.txt` contains `VCPKG_MANIFEST_MODE:BOOL=ON`.
+- Default builds should not contain `VCPKG_MANIFEST_FEATURES:STRING=openmpt`.
 
 Interpretation:
-- `VorbisConfig.cmake` missing means CMake reached the vcpkg CONFIG package path.
-- `OGG_LIBRARY` missing means the project fell back to raw non-vcpkg `find_library` and the CLion/vcpkg detection is likely broken.
+- `VCPKG_MANIFEST_MODE:BOOL=ON` means CMake detected the vcpkg toolchain path.
+- Any `VorbisConfig.cmake` or `OGG_LIBRARY` failure means the top-level CMake is still hard-requiring removed audio packages.
+
+## Optional OpenMPT / MO3 path
+
+Use this when validating that MO3/tracker support remains available behind `PVZ_ENABLE_OPENMPT`:
+
+```bash
+cmake -S /path/to/PvZ-XPort \
+  -B /path/to/PvZ-XPort/build-vcpkg-openmpt-test \
+  -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE=/home/ubuntu/pvz-vcpkg-fake/scripts/buildsystems/vcpkg.cmake \
+  -DPVZ_AUTO_PACK_RESOURCES=OFF \
+  -DPVZ_ENABLE_OPENMPT=ON 2>&1 | tee /home/ubuntu/pvz-vcpkg-fake/openmpt-configure.log
+cmake --build /path/to/PvZ-XPort/build-vcpkg-openmpt-test --target pvz-portable -j$(nproc)
+```
+
+Expected:
+- Configure exits 0 if OpenMPT is available in the test environment or via real vcpkg.
+- `CMakeCache.txt` contains `USE_OPENMPT:BOOL=ON`.
+- With a vcpkg toolchain path, `CMakeCache.txt` contains `VCPKG_MANIFEST_FEATURES:STRING=openmpt`.
+- The configure log contains `== using libopenmpt ==` or `OpenMPT found` and lists MO3 in tracker formats.
+- Build exits 0.
 
 ## Real resource packing/staging smoke test
 
