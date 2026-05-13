@@ -127,6 +127,9 @@ option(CONSOLE "Show console on Windows" ${WIN_CONSOLE_DEFAULT})
 option(DO_FIX_BUGS "Define DO_FIX_BUGS macro (Community fixes for original game bugs of 1.2.0.1073 GOTY Edition)" OFF)
 option(PVZ_AUTO_PACK_RESOURCES "Pack resources from the res submodule during build" ON)
 option(PVZ_AUTO_INIT_RESOURCE_SUBMODULE "Automatically initialize the res submodule when configuring resources" ON)
+option(PVZ_AUTO_INIT_BUNDLED_DEPS "Automatically initialize bundled dependency submodules when configuring" ON)
+option(PVZ_REQUIRE_BUNDLED_DEPS "Fail configure if bundled dependency submodules are unavailable instead of falling back to system packages" OFF)
+option(PVZ_USE_BUNDLED_DEPS "Build common dependencies from libs/ submodules" ON)
 set(PVZ_RESOURCE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE PATH "PvZ resource submodule path")
 set(PVZ_PACKED_RESOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/resources")
 
@@ -163,6 +166,238 @@ function(pvz_maybe_init_resource_submodule)
 	else()
 		message(STATUS "Resource submodule initialized at ${PVZ_RESOURCE_SOURCE_DIR}")
 	endif()
+endfunction()
+
+if(NOT DEFINED PVZ_BUILD_SHARED_DEPS)
+	if(ANDROID)
+		set(PVZ_BUILD_SHARED_DEPS ON)
+	else()
+		set(PVZ_BUILD_SHARED_DEPS OFF)
+	endif()
+endif()
+set(PVZ_BUILD_SHARED_DEPS ${PVZ_BUILD_SHARED_DEPS} CACHE BOOL "Build bundled dependencies as shared libraries")
+
+function(pvz_ensure_bundled_dep dep dir out_var)
+	if(PVZ_AUTO_INIT_BUNDLED_DEPS AND NOT EXISTS "${PROJECT_SOURCE_DIR}/libs/${dir}/CMakeLists.txt")
+		if(EXISTS "${PROJECT_SOURCE_DIR}/.gitmodules" AND Git_FOUND)
+			message(STATUS "Bundled ${dep} submodule is not initialized; running git submodule update --init --recursive libs/${dir}")
+			execute_process(
+				COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive "libs/${dir}"
+				WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+				RESULT_VARIABLE _pvz_dep_submodule_result
+				OUTPUT_VARIABLE _pvz_dep_submodule_stdout
+				ERROR_VARIABLE _pvz_dep_submodule_stderr
+			)
+			if(NOT _pvz_dep_submodule_result EQUAL 0)
+				message(WARNING "Failed to initialize libs/${dir} automatically.\n${_pvz_dep_submodule_stdout}\n${_pvz_dep_submodule_stderr}")
+			endif()
+		endif()
+	endif()
+	if(NOT EXISTS "${PROJECT_SOURCE_DIR}/libs/${dir}/CMakeLists.txt")
+		set(${out_var} FALSE PARENT_SCOPE)
+		return()
+	endif()
+	set(${out_var} TRUE PARENT_SCOPE)
+endfunction()
+
+function(pvz_configure_bundled_deps out_var)
+	pvz_ensure_bundled_dep("SDL2" "SDL" _pvz_has_sdl)
+	pvz_ensure_bundled_dep("zlib" "zlib" _pvz_has_zlib)
+	pvz_ensure_bundled_dep("libpng" "libpng" _pvz_has_libpng)
+	pvz_ensure_bundled_dep("libjpeg-turbo" "libjpeg-turbo" _pvz_has_libjpeg_turbo)
+
+	if(NOT (_pvz_has_sdl AND _pvz_has_zlib AND _pvz_has_libpng AND _pvz_has_libjpeg_turbo))
+		if(PVZ_REQUIRE_BUNDLED_DEPS)
+			message(FATAL_ERROR "Missing bundled dependency submodules. Run: git submodule update --init --recursive libs/SDL libs/zlib libs/libpng libs/libjpeg-turbo")
+		endif()
+		message(WARNING "Bundled dependency submodules are unavailable; falling back to system packages. Run 'git submodule update --init --recursive libs/SDL libs/zlib libs/libpng libs/libjpeg-turbo' to use bundled dependencies.")
+		set(${out_var} FALSE PARENT_SCOPE)
+		return()
+	endif()
+
+	if(PVZ_BUILD_SHARED_DEPS)
+		set(_pvz_build_shared ON)
+		set(_pvz_build_static OFF)
+	else()
+		set(_pvz_build_shared OFF)
+		set(_pvz_build_static ON)
+	endif()
+
+	set(SDL_SHARED ${_pvz_build_shared} CACHE BOOL "Build a shared version of SDL2" FORCE)
+	set(SDL_STATIC ${_pvz_build_static} CACHE BOOL "Build a static version of SDL2" FORCE)
+	set(SDL_TEST OFF CACHE BOOL "Build the SDL2_test library" FORCE)
+	set(SDL_TESTS OFF CACHE BOOL "Build the SDL2 test programs" FORCE)
+	set(SDL_INSTALL_TESTS OFF CACHE BOOL "Install SDL2 test programs" FORCE)
+	set(SDL_STATIC_PIC ON CACHE BOOL "Build SDL2 static library with PIC" FORCE)
+	if(ANDROID)
+		set(SDL_SHARED ON CACHE BOOL "Build a shared version of SDL2" FORCE)
+		set(SDL_STATIC OFF CACHE BOOL "Build a static version of SDL2" FORCE)
+	endif()
+
+	set(ZLIB_BUILD_SHARED ${_pvz_build_shared} CACHE BOOL "Build zlib shared library" FORCE)
+	set(ZLIB_BUILD_STATIC ${_pvz_build_static} CACHE BOOL "Build zlib static library" FORCE)
+	set(ZLIB_BUILD_TESTING OFF CACHE BOOL "Build zlib tests" FORCE)
+	set(ZLIB_INSTALL OFF CACHE BOOL "Install zlib" FORCE)
+
+	set(PNG_SHARED ${_pvz_build_shared} CACHE BOOL "Build libpng shared library" FORCE)
+	set(PNG_STATIC ${_pvz_build_static} CACHE BOOL "Build libpng static library" FORCE)
+	set(PNG_TESTS OFF CACHE BOOL "Build libpng tests" FORCE)
+	set(PNG_TOOLS OFF CACHE BOOL "Build libpng tools" FORCE)
+	set(PNG_EXECUTABLES OFF CACHE BOOL "Build libpng tools" FORCE)
+	set(PNG_FRAMEWORK OFF CACHE BOOL "Build libpng framework" FORCE)
+	set(PNG_LIBCONF_HEADER "${PROJECT_SOURCE_DIR}/libs/libpng/scripts/pnglibconf.h.prebuilt" CACHE FILEPATH "Use libpng prebuilt config" FORCE)
+	set(SKIP_INSTALL_ALL ON CACHE BOOL "Skip bundled dependency install rules" FORCE)
+
+	add_subdirectory(libs/SDL EXCLUDE_FROM_ALL)
+	add_subdirectory(libs/zlib EXCLUDE_FROM_ALL)
+	if(NOT TARGET ZLIB::ZLIB)
+		add_library(ZLIB::ZLIB ALIAS zlibstatic)
+	endif()
+	add_subdirectory(libs/libpng EXCLUDE_FROM_ALL)
+	if(NOT TARGET PNG::PNG)
+		add_library(PNG::PNG ALIAS png_static)
+	endif()
+
+	set(WITH_TURBOJPEG OFF CACHE BOOL "Build TurboJPEG API library" FORCE)
+	set(WITH_TOOLS OFF CACHE BOOL "Build libjpeg-turbo tools" FORCE)
+	set(WITH_TESTS OFF CACHE BOOL "Build libjpeg-turbo tests" FORCE)
+	set(ENABLE_SHARED OFF CACHE BOOL "Build libjpeg-turbo shared libraries" FORCE)
+	set(ENABLE_STATIC ON CACHE BOOL "Build libjpeg-turbo static libraries" FORCE)
+	set(JPEG_LIB_VERSION 62)
+	set(VERSION "3.1.4.1")
+	set(LIBJPEG_TURBO_VERSION_NUMBER 3001004)
+	set(BUILD "")
+	set(CMAKE_PROJECT_NAME "${PROJECT_NAME}")
+	set(HIDDEN "")
+	set(INLINE inline)
+	set(THREAD_LOCAL "__thread")
+	set(SIZE_T ${CMAKE_SIZEOF_VOID_P})
+	set(C_ARITH_CODING_SUPPORTED 1)
+	set(D_ARITH_CODING_SUPPORTED 1)
+	add_library(jpeg-static STATIC
+		libs/libjpeg-turbo/src/jcapimin.c
+		libs/libjpeg-turbo/src/wrapper/jcapistd-8.c
+		libs/libjpeg-turbo/src/wrapper/jcapistd-12.c
+		libs/libjpeg-turbo/src/wrapper/jcapistd-16.c
+		libs/libjpeg-turbo/src/wrapper/jccoefct-8.c
+		libs/libjpeg-turbo/src/wrapper/jccoefct-12.c
+		libs/libjpeg-turbo/src/wrapper/jccolor-8.c
+		libs/libjpeg-turbo/src/wrapper/jccolor-12.c
+		libs/libjpeg-turbo/src/wrapper/jccolor-16.c
+		libs/libjpeg-turbo/src/wrapper/jcdctmgr-8.c
+		libs/libjpeg-turbo/src/wrapper/jcdctmgr-12.c
+		libs/libjpeg-turbo/src/wrapper/jcdiffct-8.c
+		libs/libjpeg-turbo/src/wrapper/jcdiffct-12.c
+		libs/libjpeg-turbo/src/wrapper/jcdiffct-16.c
+		libs/libjpeg-turbo/src/jchuff.c
+		libs/libjpeg-turbo/src/jcicc.c
+		libs/libjpeg-turbo/src/jcinit.c
+		libs/libjpeg-turbo/src/jclhuff.c
+		libs/libjpeg-turbo/src/wrapper/jclossls-8.c
+		libs/libjpeg-turbo/src/wrapper/jclossls-12.c
+		libs/libjpeg-turbo/src/wrapper/jclossls-16.c
+		libs/libjpeg-turbo/src/wrapper/jcmainct-8.c
+		libs/libjpeg-turbo/src/wrapper/jcmainct-12.c
+		libs/libjpeg-turbo/src/wrapper/jcmainct-16.c
+		libs/libjpeg-turbo/src/jcmarker.c
+		libs/libjpeg-turbo/src/jcmaster.c
+		libs/libjpeg-turbo/src/jcomapi.c
+		libs/libjpeg-turbo/src/jcparam.c
+		libs/libjpeg-turbo/src/jcphuff.c
+		libs/libjpeg-turbo/src/wrapper/jcprepct-8.c
+		libs/libjpeg-turbo/src/wrapper/jcprepct-12.c
+		libs/libjpeg-turbo/src/wrapper/jcprepct-16.c
+		libs/libjpeg-turbo/src/wrapper/jcsample-8.c
+		libs/libjpeg-turbo/src/wrapper/jcsample-12.c
+		libs/libjpeg-turbo/src/wrapper/jcsample-16.c
+		libs/libjpeg-turbo/src/jctrans.c
+		libs/libjpeg-turbo/src/jdapimin.c
+		libs/libjpeg-turbo/src/wrapper/jdapistd-8.c
+		libs/libjpeg-turbo/src/wrapper/jdapistd-12.c
+		libs/libjpeg-turbo/src/wrapper/jdapistd-16.c
+		libs/libjpeg-turbo/src/jdatadst.c
+		libs/libjpeg-turbo/src/jdatasrc.c
+		libs/libjpeg-turbo/src/wrapper/jdcoefct-8.c
+		libs/libjpeg-turbo/src/wrapper/jdcoefct-12.c
+		libs/libjpeg-turbo/src/wrapper/jdcolor-8.c
+		libs/libjpeg-turbo/src/wrapper/jdcolor-12.c
+		libs/libjpeg-turbo/src/wrapper/jdcolor-16.c
+		libs/libjpeg-turbo/src/wrapper/jddctmgr-8.c
+		libs/libjpeg-turbo/src/wrapper/jddctmgr-12.c
+		libs/libjpeg-turbo/src/wrapper/jddiffct-8.c
+		libs/libjpeg-turbo/src/wrapper/jddiffct-12.c
+		libs/libjpeg-turbo/src/wrapper/jddiffct-16.c
+		libs/libjpeg-turbo/src/jdhuff.c
+		libs/libjpeg-turbo/src/jdicc.c
+		libs/libjpeg-turbo/src/jdinput.c
+		libs/libjpeg-turbo/src/jdlhuff.c
+		libs/libjpeg-turbo/src/wrapper/jdlossls-8.c
+		libs/libjpeg-turbo/src/wrapper/jdlossls-12.c
+		libs/libjpeg-turbo/src/wrapper/jdlossls-16.c
+		libs/libjpeg-turbo/src/wrapper/jdmainct-8.c
+		libs/libjpeg-turbo/src/wrapper/jdmainct-12.c
+		libs/libjpeg-turbo/src/wrapper/jdmainct-16.c
+		libs/libjpeg-turbo/src/jdmarker.c
+		libs/libjpeg-turbo/src/jdmaster.c
+		libs/libjpeg-turbo/src/wrapper/jdmerge-8.c
+		libs/libjpeg-turbo/src/wrapper/jdmerge-12.c
+		libs/libjpeg-turbo/src/jdphuff.c
+		libs/libjpeg-turbo/src/wrapper/jdpostct-8.c
+		libs/libjpeg-turbo/src/wrapper/jdpostct-12.c
+		libs/libjpeg-turbo/src/wrapper/jdpostct-16.c
+		libs/libjpeg-turbo/src/wrapper/jdsample-8.c
+		libs/libjpeg-turbo/src/wrapper/jdsample-12.c
+		libs/libjpeg-turbo/src/wrapper/jdsample-16.c
+		libs/libjpeg-turbo/src/jdtrans.c
+		libs/libjpeg-turbo/src/jerror.c
+		libs/libjpeg-turbo/src/jfdctflt.c
+		libs/libjpeg-turbo/src/wrapper/jfdctfst-8.c
+		libs/libjpeg-turbo/src/wrapper/jfdctfst-12.c
+		libs/libjpeg-turbo/src/wrapper/jfdctint-8.c
+		libs/libjpeg-turbo/src/wrapper/jfdctint-12.c
+		libs/libjpeg-turbo/src/wrapper/jidctflt-8.c
+		libs/libjpeg-turbo/src/wrapper/jidctflt-12.c
+		libs/libjpeg-turbo/src/wrapper/jidctfst-8.c
+		libs/libjpeg-turbo/src/wrapper/jidctfst-12.c
+		libs/libjpeg-turbo/src/wrapper/jidctint-8.c
+		libs/libjpeg-turbo/src/wrapper/jidctint-12.c
+		libs/libjpeg-turbo/src/wrapper/jidctred-8.c
+		libs/libjpeg-turbo/src/wrapper/jidctred-12.c
+		libs/libjpeg-turbo/src/jmemmgr.c
+		libs/libjpeg-turbo/src/jmemnobs.c
+		libs/libjpeg-turbo/src/jpeg_nbits.c
+		libs/libjpeg-turbo/src/wrapper/jquant1-8.c
+		libs/libjpeg-turbo/src/wrapper/jquant1-12.c
+		libs/libjpeg-turbo/src/wrapper/jquant2-8.c
+		libs/libjpeg-turbo/src/wrapper/jquant2-12.c
+		libs/libjpeg-turbo/src/wrapper/jutils-8.c
+		libs/libjpeg-turbo/src/wrapper/jutils-12.c
+		libs/libjpeg-turbo/src/wrapper/jutils-16.c
+		libs/libjpeg-turbo/src/jutils.c
+		libs/libjpeg-turbo/src/jaricom.c
+		libs/libjpeg-turbo/src/jcarith.c
+		libs/libjpeg-turbo/src/jdarith.c
+	)
+	target_include_directories(jpeg-static PUBLIC
+		"${CMAKE_CURRENT_BINARY_DIR}/generated/libjpeg-turbo"
+		"${PROJECT_SOURCE_DIR}/libs/libjpeg-turbo/src"
+	)
+	configure_file(libs/libjpeg-turbo/src/jconfig.h.in generated/libjpeg-turbo/jconfig.h)
+	configure_file(libs/libjpeg-turbo/src/jconfigint.h.in generated/libjpeg-turbo/jconfigint.h)
+	configure_file(libs/libjpeg-turbo/src/jversion.h.in generated/libjpeg-turbo/jversion.h)
+	add_library(JPEG::JPEG ALIAS jpeg-static)
+
+	if(TARGET SDL2::SDL2-static)
+		set(SDL2_LINK_TARGET SDL2::SDL2-static CACHE INTERNAL "")
+	else()
+		set(SDL2_LINK_TARGET SDL2::SDL2 CACHE INTERNAL "")
+	endif()
+	if(TARGET SDL2::SDL2)
+		get_target_property(SDL2_INCLUDE_DIRS SDL2::SDL2 INTERFACE_INCLUDE_DIRECTORIES)
+	elseif(TARGET SDL2::SDL2-static)
+		get_target_property(SDL2_INCLUDE_DIRS SDL2::SDL2-static INTERFACE_INCLUDE_DIRECTORIES)
+	endif()
+	set(${out_var} TRUE PARENT_SCOPE)
 endfunction()
 
 function(pvz_configure_resources target)
@@ -223,6 +458,16 @@ function(pvz_configure_resources target)
 	endif()
 
 	if(_stage_dir)
+		add_custom_command(TARGET ${target} POST_BUILD
+			COMMAND "${CMAKE_COMMAND}"
+				"-DSOURCE_DIR=${PVZ_PACKED_RESOURCE_DIR}"
+				"-DDEST_DIR=${_stage_dir}"
+				-P "${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_resources.cmake"
+			COMMAND_EXPAND_LISTS
+			COMMENT "Staging PvZ resources to ${_stage_dir}"
+			VERBATIM
+		)
+
 		add_custom_target(pvz-stage-resources ALL
 			COMMAND "${CMAKE_COMMAND}"
 				"-DSOURCE_DIR=${PVZ_PACKED_RESOURCE_DIR}"
@@ -244,10 +489,15 @@ if(EMSCRIPTEN)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -sUSE_SDL=2 -sUSE_ZLIB=1 -sUSE_LIBPNG=1 -sUSE_LIBJPEG=1 -sUSE_OGG=1 -sUSE_VORBIS=1 -sUSE_MPG123=1")
 else()
 	find_package(Threads REQUIRED)
-	find_package(ZLIB REQUIRED)
-	find_package(JPEG REQUIRED)
-	find_package(PNG REQUIRED)
-	find_package(SDL2 REQUIRED)
+	if(PVZ_USE_BUNDLED_DEPS)
+		pvz_configure_bundled_deps(PVZ_USE_CONFIGURED_BUNDLED_DEPS)
+	endif()
+	if(NOT PVZ_USE_CONFIGURED_BUNDLED_DEPS)
+		find_package(ZLIB REQUIRED)
+		find_package(JPEG REQUIRED)
+		find_package(PNG REQUIRED)
+		find_package(SDL2 REQUIRED)
+	endif()
 endif()
 
 function(_pvz_patch_sdl2_iface_libs target)
@@ -266,7 +516,15 @@ function(_pvz_patch_sdl2_iface_libs target)
 	set_target_properties(${target} PROPERTIES INTERFACE_LINK_LIBRARIES "${_patched}")
 endfunction()
 
-if(BUILD_STATIC AND TARGET SDL2::SDL2-static)
+if(PVZ_USE_CONFIGURED_BUNDLED_DEPS)
+	if(NOT SDL2_LINK_TARGET)
+		if(TARGET SDL2::SDL2-static)
+			set(SDL2_LINK_TARGET SDL2::SDL2-static)
+		else()
+			set(SDL2_LINK_TARGET SDL2::SDL2)
+		endif()
+	endif()
+elseif(BUILD_STATIC AND TARGET SDL2::SDL2-static)
 	if(TARGET SDL2::SDL2main)
 		_pvz_patch_sdl2_iface_libs(SDL2::SDL2main)
 	endif()
@@ -277,6 +535,7 @@ endif()
 
 set(SDL_MIXER_X_STATIC ON CACHE BOOL "Build static library of SDL Mixer X")
 set(SDL_MIXER_X_SHARED OFF CACHE BOOL "Build shared library of SDL Mixer X")
+set(CMAKE_SKIP_INSTALL_RULES ON)
 set(USE_OPENMPT ${PVZ_ENABLE_OPENMPT} CACHE BOOL "SDL Mixer X OpenMPT" FORCE)
 set(USE_MIDI OFF CACHE BOOL "SDL Mixer X midi")
 set(USE_MODPLUG OFF CACHE BOOL "SDL Mixer X modplug")
@@ -289,8 +548,8 @@ set(USE_MP3_MPG123 OFF CACHE BOOL "SDL Mixer X mpg123" FORCE)
 set(USE_OGG_VORBIS_STB ON CACHE BOOL "SDL Mixer X stb_vorbis" FORCE)
 add_subdirectory(src/SexyAppFramework/sound/SDL-Mixer-X)
 
-# Patch SDL-Mixer-X's transitive SDL2 dep without touching vendored CMake files
-if(BUILD_STATIC AND TARGET SDL2::SDL2-static)
+# Patch SDL-Mixer-X's transitive SDL2 dep without touching vendored CMake files.
+if((BUILD_STATIC OR PVZ_USE_CONFIGURED_BUNDLED_DEPS) AND TARGET SDL2::SDL2-static)
 	_pvz_patch_sdl2_iface_libs(SDL2_mixer_ext_Static)
 endif()
 
@@ -350,10 +609,12 @@ else()
 		PNG::PNG
 		JPEG::JPEG
 		ZLIB::ZLIB
-		SDL2::SDL2main
 		${SDL2_LINK_TARGET}
 		Threads::Threads
 	)
+	if(TARGET SDL2::SDL2main)
+		target_link_libraries(pvz-portable PRIVATE SDL2::SDL2main)
+	endif()
 endif()
 
 if (WIN32)

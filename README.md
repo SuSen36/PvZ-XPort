@@ -173,60 +173,72 @@ Since `default.xml` takes priority over `LawnStrings.txt`, users can also **crea
 
 ## Dependencies
 
-The default desktop build keeps external dependencies intentionally small:
+The default desktop build keeps external dependencies intentionally small and builds common libraries from pinned `libs/` submodules:
 
 - **Build Tools**: `CMake`, `Ninja`, A C/C++ compiler (e.g., `gcc`, `clang`, `MSVC`) supporting **C++20** (Also need a standard library implementation like `libstdc++`, `libc++` or MSVC STL that supports C++20)
 - **Graphics**: `OpenGL ES 2.0` or `OpenGL 2.1+` (auto-detected at runtime via SDL2)
 - **Audio**: no external OGG/Vorbis/MP3 packages are required by default; SDL Mixer X uses bundled `stb_vorbis` and `dr_mp3`
-- **Image**: `libpng`, `libjpeg-turbo`
-- **Windowing/Input**: `SDL2`
+- **Image**: bundled `zlib`, `libpng`, `libjpeg-turbo`
+- **Windowing/Input**: bundled `SDL2`
+
+Bundled dependency sources and licenses:
+
+| Path | Version | License |
+| :--- | :--- | :--- |
+| `libs/SDL` | SDL2 `release-2.32.10` | Zlib |
+| `libs/zlib` | `v1.3.2` | Zlib |
+| `libs/libpng` | `v1.6.58` | PNG Reference Library License v2 |
+| `libs/libjpeg-turbo` | `3.1.4.1` | IJG + BSD-style licenses |
+
+By default `PVZ_USE_BUNDLED_DEPS=ON`, so desktop CMake builds no longer require installing SDL2/libpng/libjpeg/zlib through a package manager or vcpkg. Use `git submodule update --init --recursive libs/SDL libs/zlib libs/libpng libs/libjpeg-turbo` if those folders are missing. Set `-DPVZ_USE_BUNDLED_DEPS=OFF` to use system packages instead.
+
+Bundled dependency link mode is controlled by `PVZ_BUILD_SHARED_DEPS`: it defaults to `OFF` for desktop-style builds (static bundled libs) and `ON` for Android (shared SDL2 loaded by `SDLActivity`). You can override it explicitly when a platform needs a different static/dynamic policy.
 
 Optional: configure with `-DPVZ_ENABLE_OPENMPT=ON` to enable `libopenmpt` MO3/tracker music playback. This restores MO3 support for tracks such as `sounds/mainmusic.mo3`, but requires `libopenmpt` from your package manager or vcpkg.
 
 ### Arch Linux
 
-You can install the required dependencies using the following command:
+With the default bundled dependency build, only build tools are required:
 
 ```bash
-sudo pacman -S --needed base-devel cmake libjpeg-turbo libpng ninja sdl2-compat
+sudo pacman -S --needed base-devel cmake ninja
 ```
 
 ### Debian/Ubuntu
 
-You can install the required dependencies using the following command:
+With the default bundled dependency build, only build tools are required:
 
 ```bash
-sudo apt install cmake ninja-build libjpeg-dev libpng-dev libsdl2-dev
+sudo apt install build-essential cmake ninja-build
 ```
 
 ### Windows (Visual Studio / CLion / vcpkg)
 
-When using Visual Studio, CLion, or any CMake command with the vcpkg toolchain file, only the minimal dependencies in `vcpkg.json` are installed automatically during CMake configure:
+Visual Studio or CLion can configure the project without installing SDL2/libpng/libjpeg/zlib through vcpkg:
 
 ```powershell
 cmake -G "Visual Studio 17 2022" `
-  -DCMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake `
   -S . -B build
 ```
 
-If you want a standalone MSVC executable, use a static vcpkg triplet, for example `-DVCPKG_TARGET_TRIPLET=x64-windows-static`.
+You may still pass a vcpkg toolchain file if you use it for optional packages; the default bundled dependency path does not require SDL2/vorbis/ogg/mpg123 packages.
 
 To enable optional `libopenmpt` music playback with vcpkg, add `-DPVZ_ENABLE_OPENMPT=ON`; the `openmpt` manifest feature will be enabled automatically.
 
 ### Windows (MSYS2 UCRT64)
 
-You can install the required dependencies using the following command:
+With the default bundled dependency build, only build tools are required:
 
 ```bash
-pacman -S --needed base-devel mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-libjpeg-turbo mingw-w64-ucrt-x86_64-libpng mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-SDL2
+pacman -S --needed base-devel mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-ninja
 ```
 
 ### macOS (Homebrew)
 
-You can install the required dependencies using [Homebrew](https://brew.sh/) with the following command:
+With the default bundled dependency build, only build tools are required:
 
 ```bash
-brew install cmake dylibbundler jpeg-turbo libpng ninja sdl2
+brew install cmake ninja
 ```
 
 ## Build Instructions
@@ -266,6 +278,9 @@ You can customize the game features by adding options to the first `cmake` comma
 | `DO_FIX_BUGS` | `OFF` | Apply community fixes for "bugs" of official 1.2.0.1073 GOTY Edition.[^1] However, these "bugs" are usually **considered "features"** by many players. |
 | `CONSOLE` | `OFF`<br>(`ON` if `CMAKE_BUILD_TYPE` is `Debug`) | Show a console window (Windows only). |
 | `BUILD_STATIC` | `OFF` | Link statically to create a standalone executable (Windows with MinGW-based toolchains only). Use a vcpkg `-static` triplet for MSVC instead. |
+| `PVZ_USE_BUNDLED_DEPS` | `ON` | Build SDL2/zlib/libpng/libjpeg-turbo from `libs/` submodules instead of requiring system packages. |
+| `PVZ_BUILD_SHARED_DEPS` | `OFF` desktop<br>`ON` Android | Build bundled dependencies as shared libraries when needed by the target platform. |
+| `PVZ_ENABLE_OPENMPT` | `OFF` | Enable optional libopenmpt MO3/tracker music playback. |
 
 [^1]: Current `DO_FIX_BUGS` includes the following fixes:
     - Fix bungee zombie duplicate sun/item drop in I, Zombie mode.
