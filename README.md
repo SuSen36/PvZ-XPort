@@ -71,7 +71,7 @@ If you maintain a private resource repository, initialize it as the root `res/` 
 git submodule update --init --recursive res
 ```
 
-During CMake builds, `PVZ_AUTO_PACK_RESOURCES` is enabled by default. When `res/` contains legal game resources, CMake runs `tools/pack_resources.py` with `resources/resource-pack.json`, generates `build/generated/resources/main.pak`, copies loose `properties/`, then stages the result for the active platform:
+During CMake builds, `PVZ_AUTO_PACK_RESOURCES` and `PVZ_AUTO_INIT_RESOURCE_SUBMODULE` are enabled by default. If the root `res/` submodule is not initialized yet, CMake first runs `git submodule update --init --recursive res`. When `res/` contains legal game resources, CMake then runs `tools/pack_resources.py` with `resources/resource-pack.json`, generates `build/generated/resources/main.pak`, copies loose `properties/`, then stages the result for the active platform:
 
 - Linux / Windows: next to the built executable.
 - macOS: inside the `.app` bundle `Contents/Resources`.
@@ -80,7 +80,7 @@ During CMake builds, `PVZ_AUTO_PACK_RESOURCES` is enabled by default. When `res/
 - WebAssembly: preloaded into the virtual filesystem root.
 - Switch / 3DS: under the build output's `PvZPortable` resource folder for SD-card deployment.
 
-If `res/` is missing or empty, packing is skipped and the runtime resource manager remains the fallback. Use `-DPVZ_AUTO_PACK_RESOURCES=OFF` to disable this build step.
+If `res/` is missing or empty, or Git is unavailable, packing is skipped and the runtime resource manager remains the fallback. Use `-DPVZ_AUTO_PACK_RESOURCES=OFF` to disable this build step, or `-DPVZ_AUTO_INIT_RESOURCE_SUBMODULE=OFF` to skip the automatic submodule update.
 
 Note about writable data and caches:
 
