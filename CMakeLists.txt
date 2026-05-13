@@ -128,6 +128,7 @@ option(DO_FIX_BUGS "Define DO_FIX_BUGS macro (Community fixes for original game 
 option(PVZ_AUTO_PACK_RESOURCES "Pack resources from the res submodule during build" ON)
 option(PVZ_AUTO_INIT_RESOURCE_SUBMODULE "Automatically initialize the res submodule when configuring resources" ON)
 option(PVZ_AUTO_INIT_BUNDLED_DEPS "Automatically initialize bundled dependency submodules when configuring" ON)
+option(PVZ_REQUIRE_BUNDLED_DEPS "Fail configure if bundled dependency submodules are unavailable instead of falling back to system packages" OFF)
 option(PVZ_USE_BUNDLED_DEPS "Build common dependencies from libs/ submodules" ON)
 set(PVZ_RESOURCE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE PATH "PvZ resource submodule path")
 set(PVZ_PACKED_RESOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/resources")
@@ -176,32 +177,43 @@ if(NOT DEFINED PVZ_BUILD_SHARED_DEPS)
 endif()
 set(PVZ_BUILD_SHARED_DEPS ${PVZ_BUILD_SHARED_DEPS} CACHE BOOL "Build bundled dependencies as shared libraries")
 
-function(pvz_require_bundled_dep dep dir)
-if(PVZ_AUTO_INIT_BUNDLED_DEPS AND NOT EXISTS "${PROJECT_SOURCE_DIR}/libs/${dir}/CMakeLists.txt")
-if(EXISTS "${PROJECT_SOURCE_DIR}/.gitmodules" AND Git_FOUND)
-message(STATUS "Bundled ${dep} submodule is not initialized; running git submodule update --init --recursive libs/${dir}")
-execute_process(
-COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive "libs/${dir}"
-WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-RESULT_VARIABLE _pvz_dep_submodule_result
-OUTPUT_VARIABLE _pvz_dep_submodule_stdout
-ERROR_VARIABLE _pvz_dep_submodule_stderr
-)
-if(NOT _pvz_dep_submodule_result EQUAL 0)
-message(WARNING "Failed to initialize libs/${dir} automatically.\n${_pvz_dep_submodule_stdout}\n${_pvz_dep_submodule_stderr}")
-endif()
-endif()
-endif()
-	if(NOT EXISTS "${PROJECT_SOURCE_DIR}/libs/${dir}/CMakeLists.txt")
-		message(FATAL_ERROR "Missing libs/${dir}. Run: git submodule update --init --recursive libs/${dir}")
+function(pvz_ensure_bundled_dep dep dir out_var)
+	if(PVZ_AUTO_INIT_BUNDLED_DEPS AND NOT EXISTS "${PROJECT_SOURCE_DIR}/libs/${dir}/CMakeLists.txt")
+		if(EXISTS "${PROJECT_SOURCE_DIR}/.gitmodules" AND Git_FOUND)
+			message(STATUS "Bundled ${dep} submodule is not initialized; running git submodule update --init --recursive libs/${dir}")
+			execute_process(
+				COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive "libs/${dir}"
+				WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+				RESULT_VARIABLE _pvz_dep_submodule_result
+				OUTPUT_VARIABLE _pvz_dep_submodule_stdout
+				ERROR_VARIABLE _pvz_dep_submodule_stderr
+			)
+			if(NOT _pvz_dep_submodule_result EQUAL 0)
+				message(WARNING "Failed to initialize libs/${dir} automatically.\n${_pvz_dep_submodule_stdout}\n${_pvz_dep_submodule_stderr}")
+			endif()
+		endif()
 	endif()
+	if(NOT EXISTS "${PROJECT_SOURCE_DIR}/libs/${dir}/CMakeLists.txt")
+		set(${out_var} FALSE PARENT_SCOPE)
+		return()
+	endif()
+	set(${out_var} TRUE PARENT_SCOPE)
 endfunction()
 
-function(pvz_configure_bundled_deps)
-	pvz_require_bundled_dep("SDL2" "SDL")
-	pvz_require_bundled_dep("zlib" "zlib")
-	pvz_require_bundled_dep("libpng" "libpng")
-	pvz_require_bundled_dep("libjpeg-turbo" "libjpeg-turbo")
+function(pvz_configure_bundled_deps out_var)
+	pvz_ensure_bundled_dep("SDL2" "SDL" _pvz_has_sdl)
+	pvz_ensure_bundled_dep("zlib" "zlib" _pvz_has_zlib)
+	pvz_ensure_bundled_dep("libpng" "libpng" _pvz_has_libpng)
+	pvz_ensure_bundled_dep("libjpeg-turbo" "libjpeg-turbo" _pvz_has_libjpeg_turbo)
+
+	if(NOT (_pvz_has_sdl AND _pvz_has_zlib AND _pvz_has_libpng AND _pvz_has_libjpeg_turbo))
+		if(PVZ_REQUIRE_BUNDLED_DEPS)
+			message(FATAL_ERROR "Missing bundled dependency submodules. Run: git submodule update --init --recursive libs/SDL libs/zlib libs/libpng libs/libjpeg-turbo")
+		endif()
+		message(WARNING "Bundled dependency submodules are unavailable; falling back to system packages. Run 'git submodule update --init --recursive libs/SDL libs/zlib libs/libpng libs/libjpeg-turbo' to use bundled dependencies.")
+		set(${out_var} FALSE PARENT_SCOPE)
+		return()
+	endif()
 
 	if(PVZ_BUILD_SHARED_DEPS)
 		set(_pvz_build_shared ON)
@@ -385,6 +397,7 @@ function(pvz_configure_bundled_deps)
 	elseif(TARGET SDL2::SDL2-static)
 		get_target_property(SDL2_INCLUDE_DIRS SDL2::SDL2-static INTERFACE_INCLUDE_DIRECTORIES)
 	endif()
+	set(${out_var} TRUE PARENT_SCOPE)
 endfunction()
 
 function(pvz_configure_resources target)
@@ -477,8 +490,9 @@ if(EMSCRIPTEN)
 else()
 	find_package(Threads REQUIRED)
 	if(PVZ_USE_BUNDLED_DEPS)
-		pvz_configure_bundled_deps()
-	else()
+		pvz_configure_bundled_deps(PVZ_USE_CONFIGURED_BUNDLED_DEPS)
+	endif()
+	if(NOT PVZ_USE_CONFIGURED_BUNDLED_DEPS)
 		find_package(ZLIB REQUIRED)
 		find_package(JPEG REQUIRED)
 		find_package(PNG REQUIRED)
@@ -502,7 +516,7 @@ function(_pvz_patch_sdl2_iface_libs target)
 	set_target_properties(${target} PROPERTIES INTERFACE_LINK_LIBRARIES "${_patched}")
 endfunction()
 
-if(PVZ_USE_BUNDLED_DEPS)
+if(PVZ_USE_CONFIGURED_BUNDLED_DEPS)
 	if(NOT SDL2_LINK_TARGET)
 		if(TARGET SDL2::SDL2-static)
 			set(SDL2_LINK_TARGET SDL2::SDL2-static)
@@ -535,7 +549,7 @@ set(USE_OGG_VORBIS_STB ON CACHE BOOL "SDL Mixer X stb_vorbis" FORCE)
 add_subdirectory(src/SexyAppFramework/sound/SDL-Mixer-X)
 
 # Patch SDL-Mixer-X's transitive SDL2 dep without touching vendored CMake files.
-if((BUILD_STATIC OR PVZ_USE_BUNDLED_DEPS) AND TARGET SDL2::SDL2-static)
+if((BUILD_STATIC OR PVZ_USE_CONFIGURED_BUNDLED_DEPS) AND TARGET SDL2::SDL2-static)
 	_pvz_patch_sdl2_iface_libs(SDL2_mixer_ext_Static)
 endif()
 
