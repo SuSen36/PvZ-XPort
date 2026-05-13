@@ -1,6 +1,6 @@
 ---
 name: testing-resource-packing
-description: Test PvZ-XPort resource submodule packing and staging. Use when verifying res/ submodule, main.pak generation, loose properties copying, or platform resource staging changes.
+description: Test PvZ-XPort resource submodule packing and staging. Use when verifying res/ submodule, main.pak generation, loose properties copying, platform resource staging changes, or CMake auto-initialization of the resource submodule.
 ---
 
 # Testing PvZ-XPort resource packing
@@ -19,6 +19,30 @@ description: Test PvZ-XPort resource submodule packing and staging. Use when ver
   - `tools/pack_resources.py`
   - `tools/stage_resources.cmake`
   - `CMakeLists.txt` function `pvz_configure_resources`
+
+## Auto-init resource submodule smoke test
+
+Use this when CMake submodule initialization logic changes:
+
+```bash
+BRANCH=$(git -C /home/ubuntu/repos/PvZ-XPort branch --show-current)
+RUN_DIR="/home/ubuntu/pvz-auto-init-$(date +%s)"
+git clone --branch "$BRANCH" --no-recurse-submodules \
+  /home/ubuntu/repos/PvZ-XPort "$RUN_DIR"
+test ! -e "$RUN_DIR/res/properties"
+cmake -S "$RUN_DIR" -B "$RUN_DIR/build" -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release 2>&1 | tee "$RUN_DIR/configure.log"
+grep -F "Resource submodule is not initialized; running git submodule update --init --recursive res" \
+  "$RUN_DIR/configure.log"
+test -d "$RUN_DIR/res/properties"
+cmake --build "$RUN_DIR/build" --target pvz-pack-resources 2>&1 | tee "$RUN_DIR/pack.log"
+grep -F "Packed 3026 files" "$RUN_DIR/pack.log"
+test -s "$RUN_DIR/build/generated/resources/main.pak"
+```
+
+Expected result: a fresh clone without `--recurse-submodules` configures successfully, initializes `res`, and packs real resources.
+
+To verify non-git/source-archive fallback, clone with `--no-recurse-submodules`, move `.git` aside, configure, and build `pvz-pack-resources`. Expected result: configure warns that submodule initialization failed, `pvz-pack-resources` exits 0, `resource-pack.stamp` mentions missing source resources, and no stale `main.pak` exists.
 
 ## Fake resource fixture
 
