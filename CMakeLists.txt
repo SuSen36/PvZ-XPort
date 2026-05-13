@@ -19,6 +19,7 @@ endif()
 project(pvz-portable LANGUAGES C CXX ASM)
 
 find_package(Python3 COMPONENTS Interpreter)
+find_package(Git QUIET)
 
 option(BUILD_STATIC "Static link for a standalone exe (Windows, non-MSVC)" OFF)
 if(BUILD_STATIC)
@@ -125,13 +126,51 @@ option(LIMBO_PAGE "Enable limbo page to access hidden levels" ON)
 option(CONSOLE "Show console on Windows" ${WIN_CONSOLE_DEFAULT})
 option(DO_FIX_BUGS "Define DO_FIX_BUGS macro (Community fixes for original game bugs of 1.2.0.1073 GOTY Edition)" OFF)
 option(PVZ_AUTO_PACK_RESOURCES "Pack resources from the res submodule during build" ON)
+option(PVZ_AUTO_INIT_RESOURCE_SUBMODULE "Automatically initialize the res submodule when configuring resources" ON)
 set(PVZ_RESOURCE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE PATH "PvZ resource submodule path")
 set(PVZ_PACKED_RESOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/resources")
+
+function(pvz_maybe_init_resource_submodule)
+	if(NOT PVZ_AUTO_PACK_RESOURCES OR NOT PVZ_AUTO_INIT_RESOURCE_SUBMODULE)
+		return()
+	endif()
+	if(NOT PVZ_RESOURCE_SOURCE_DIR STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/res")
+		return()
+	endif()
+	if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.gitmodules")
+		return()
+	endif()
+	if(EXISTS "${PVZ_RESOURCE_SOURCE_DIR}/properties")
+		return()
+	endif()
+	if(NOT Git_FOUND)
+		message(WARNING "Git was not found; cannot initialize the res submodule automatically.")
+		return()
+	endif()
+
+	message(STATUS "Resource submodule is not initialized; running git submodule update --init --recursive res")
+	execute_process(
+		COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive res
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		RESULT_VARIABLE _pvz_submodule_result
+		OUTPUT_VARIABLE _pvz_submodule_stdout
+		ERROR_VARIABLE _pvz_submodule_stderr
+	)
+	if(NOT _pvz_submodule_result EQUAL 0)
+		message(WARNING "Failed to initialize res submodule automatically; resource packing will be skipped if res stays empty.\n${_pvz_submodule_stdout}\n${_pvz_submodule_stderr}")
+	elseif(NOT EXISTS "${PVZ_RESOURCE_SOURCE_DIR}/properties")
+		message(WARNING "res submodule initialized, but properties/ was not found; resource packing may be skipped.")
+	else()
+		message(STATUS "Resource submodule initialized at ${PVZ_RESOURCE_SOURCE_DIR}")
+	endif()
+endfunction()
 
 function(pvz_configure_resources target)
 	if(NOT PVZ_AUTO_PACK_RESOURCES)
 		return()
 	endif()
+
+	pvz_maybe_init_resource_submodule()
 
 	if(NOT Python3_Interpreter_FOUND)
 		message(WARNING "Python3 was not found; skipping automatic resource packing.")
