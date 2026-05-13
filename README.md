@@ -29,7 +29,7 @@ A **cross-platform** community-driven reimplementation of Plants vs. Zombies: Ga
   - Also enable to **resize the window**, which was not possible in the original game
   - **Why OpenGL ES 2.0?** GLES 2.0 is the common subset of virtually all modern GPU APIs — every desktop OpenGL 2.1+ driver, mobile GPU, and game console inherently supports it. This means the game works **out of the box** everywhere without extra dependencies. [ANGLE](https://chromium.googlesource.com/angle/angle) can also be optionally used to translate calls to DirectX/Metal/Vulkan if needed.
 - [x] Implement a cross-platform audio system based on [SDL Mixer X](https://github.com/WohlSoft/SDL-Mixer-X)
-  - This project uses a fork of SDL Mixer X that adds compatibility with the MO3 format by using libopenmpt. This fork is located under SexyAppFramework/sound/SDL-Mixer-X
+  - This project uses a fork of SDL Mixer X. Optional MO3/tracker music playback can be enabled with libopenmpt when desired.
 - [x] Save more memory by disabling caching for console platforms that have very limited RAM
 - [x] **Compatible** with original PvZ GOTY Edition's ***global user data*** (profile info, adventure progress, coins, Zen Garden, etc., stored in `user*.dat`)
   - [x] Fix 2038 year problem while keeping compatibility
@@ -173,20 +173,22 @@ Since `default.xml` takes priority over `LawnStrings.txt`, users can also **crea
 
 ## Dependencies
 
-Before building on PC, ensure you have the necessary dependencies installed:
+The default desktop build keeps external dependencies intentionally small:
 
 - **Build Tools**: `CMake`, `Ninja`, A C/C++ compiler (e.g., `gcc`, `clang`, `MSVC`) supporting **C++20** (Also need a standard library implementation like `libstdc++`, `libc++` or MSVC STL that supports C++20)
 - **Graphics**: `OpenGL ES 2.0` or `OpenGL 2.1+` (auto-detected at runtime via SDL2)
-- **Audio**: `libopenmpt`, `libogg`, `libvorbis`, `mpg123`
+- **Audio**: no external OGG/Vorbis/MP3 packages are required by default; SDL Mixer X uses bundled `stb_vorbis` and `dr_mp3`
 - **Image**: `libpng`, `libjpeg-turbo`
 - **Windowing/Input**: `SDL2`
+
+Optional: configure with `-DPVZ_ENABLE_OPENMPT=ON` to enable `libopenmpt` MO3/tracker music playback. This restores MO3 support for tracks such as `sounds/mainmusic.mo3`, but requires `libopenmpt` from your package manager or vcpkg.
 
 ### Arch Linux
 
 You can install the required dependencies using the following command:
 
 ```bash
-sudo pacman -S --needed base-devel cmake libjpeg-turbo libogg libopenmpt libpng libvorbis mpg123 ninja sdl2-compat
+sudo pacman -S --needed base-devel cmake libjpeg-turbo libpng ninja sdl2-compat
 ```
 
 ### Debian/Ubuntu
@@ -194,12 +196,12 @@ sudo pacman -S --needed base-devel cmake libjpeg-turbo libogg libopenmpt libpng 
 You can install the required dependencies using the following command:
 
 ```bash
-sudo apt install cmake ninja-build libogg-dev libjpeg-dev libopenmpt-dev libpng-dev libvorbis-dev libmpg123-dev libsdl2-dev
+sudo apt install cmake ninja-build libjpeg-dev libpng-dev libsdl2-dev
 ```
 
 ### Windows (Visual Studio / CLion / vcpkg)
 
-When using Visual Studio, CLion, or any CMake command with the vcpkg toolchain file, dependencies are installed from `vcpkg.json` automatically during CMake configure:
+When using Visual Studio, CLion, or any CMake command with the vcpkg toolchain file, only the minimal dependencies in `vcpkg.json` are installed automatically during CMake configure:
 
 ```powershell
 cmake -G "Visual Studio 17 2022" `
@@ -209,12 +211,14 @@ cmake -G "Visual Studio 17 2022" `
 
 If you want a standalone MSVC executable, use a static vcpkg triplet, for example `-DVCPKG_TARGET_TRIPLET=x64-windows-static`.
 
+To enable optional `libopenmpt` music playback with vcpkg, add `-DPVZ_ENABLE_OPENMPT=ON`; the `openmpt` manifest feature will be enabled automatically.
+
 ### Windows (MSYS2 UCRT64)
 
 You can install the required dependencies using the following command:
 
 ```bash
-pacman -S --needed base-devel mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-libjpeg-turbo mingw-w64-ucrt-x86_64-libopenmpt mingw-w64-ucrt-x86_64-libogg mingw-w64-ucrt-x86_64-libpng mingw-w64-ucrt-x86_64-libvorbis mingw-w64-ucrt-x86_64-mpg123 mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-SDL2
+pacman -S --needed base-devel mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-libjpeg-turbo mingw-w64-ucrt-x86_64-libpng mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-SDL2
 ```
 
 ### macOS (Homebrew)
@@ -222,7 +226,7 @@ pacman -S --needed base-devel mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-
 You can install the required dependencies using [Homebrew](https://brew.sh/) with the following command:
 
 ```bash
-brew install cmake dylibbundler jpeg-turbo libogg libopenmpt libpng libvorbis mpg123 ninja sdl2
+brew install cmake dylibbundler jpeg-turbo libpng ninja sdl2
 ```
 
 ## Build Instructions
