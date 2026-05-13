@@ -32,6 +32,7 @@
 #include <math.h>
 #include <vector>
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -47,6 +48,9 @@
 #elif defined(__EMSCRIPTEN__)
 #include <emscripten.h>
 #include <emscripten/html5.h>
+#elif defined(__ANDROID__) && !defined(__TERMUX__)
+#include <SDL_system.h>
+#include <jni.h>
 #endif
 
 #include "SexyAppBase.h"
@@ -155,6 +159,92 @@ static void EmscriptenDeferredDoExit(void* arg)
 	SexyAppBase* app = static_cast<SexyAppBase*>(arg);
 	if (app != nullptr)
 		app->Shutdown();
+}
+#endif
+
+static const char* RESOURCE_MANAGER_README =
+	"PvZ Portable needs game resources from a legally purchased copy of "
+	"Plants vs. Zombies GOTY Edition.\n\n"
+	"Place main.pak and the properties/ folder in this directory, then restart the game.\n";
+
+static std::string GetResourceFolderForDisplay()
+{
+	std::string aResourceFolder = GetResourceFolder();
+	if (aResourceFolder.empty())
+		aResourceFolder = GetCurDir();
+	return aResourceFolder;
+}
+
+static std::string MakeFileUrl(const std::string& thePath)
+{
+	std::error_code ec;
+	std::filesystem::path aPath = std::filesystem::absolute(PathFromU8(thePath), ec);
+	if (ec)
+		aPath = PathFromU8(thePath);
+
+	std::string aPathText = PathToU8(aPath.lexically_normal());
+	std::string aEncoded;
+	aEncoded.reserve(aPathText.size());
+	for (unsigned char c : aPathText)
+	{
+		if (std::isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c == '/' || c == ':')
+		{
+			aEncoded += static_cast<char>(c);
+		}
+		else
+		{
+			static const char HEX[] = "0123456789ABCDEF";
+			aEncoded += '%';
+			aEncoded += HEX[c >> 4];
+			aEncoded += HEX[c & 0x0F];
+		}
+	}
+
+#ifdef _WIN32
+	return "file:///" + aEncoded;
+#else
+	return "file://" + aEncoded;
+#endif
+}
+
+static bool OpenResourceFolder()
+{
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+	const std::string aUrl = MakeFileUrl(GetResourceFolderForDisplay());
+	return SDL_OpenURL(aUrl.c_str()) == 0;
+#else
+	return false;
+#endif
+}
+
+#if defined(__ANDROID__) && !defined(__TERMUX__)
+static bool LaunchAndroidResourceManager()
+{
+	JNIEnv* aEnv = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
+	jobject anActivity = static_cast<jobject>(SDL_AndroidGetActivity());
+	if (aEnv == nullptr || anActivity == nullptr)
+		return false;
+
+	jclass anActivityClass = aEnv->GetObjectClass(anActivity);
+	if (anActivityClass == nullptr)
+	{
+		aEnv->DeleteLocalRef(anActivity);
+		return false;
+	}
+
+	jmethodID anOpenResourceManager = aEnv->GetMethodID(anActivityClass, "openResourceManager", "()V");
+	if (anOpenResourceManager == nullptr)
+	{
+		aEnv->DeleteLocalRef(anActivityClass);
+		aEnv->DeleteLocalRef(anActivity);
+		return false;
+	}
+
+	aEnv->CallVoidMethod(anActivity, anOpenResourceManager);
+
+	aEnv->DeleteLocalRef(anActivityClass);
+	aEnv->DeleteLocalRef(anActivity);
+	return !aEnv->ExceptionCheck();
 }
 #endif
 
@@ -2999,6 +3089,74 @@ void SexyAppBase::LoadResourceManifest()
 		ShowResourceError(true);
 }
 
+bool SexyAppBase::HasGameResources() const
+{
+	std::error_code ec;
+	const bool aHasPak = std::filesystem::is_regular_file(PathFromU8(GetResourcePath("main.pak")), ec);
+	ec.clear();
+	const bool aHasProperties = std::filesystem::is_directory(PathFromU8(GetResourcePath("properties")), ec);
+	return aHasPak && aHasProperties;
+}
+
+bool SexyAppBase::ShowResourceManager()
+{
+	std::error_code ec;
+	const std::filesystem::path aReadmePath = PathFromU8(GetResourcePath("README.txt"));
+	if (!aReadmePath.empty() && !std::filesystem::exists(aReadmePath, ec))
+	{
+		ec.clear();
+		const std::filesystem::path aParentPath = aReadmePath.parent_path();
+		if (!aParentPath.empty())
+			std::filesystem::create_directories(aParentPath, ec);
+		std::ofstream(aReadmePath, std::ios::out | std::ios::trunc) << RESOURCE_MANAGER_README;
+	}
+
+#if defined(__ANDROID__) && !defined(__TERMUX__)
+	if (LaunchAndroidResourceManager())
+		return true;
+#elif defined(__EMSCRIPTEN__)
+	EM_ASM({
+		if (typeof window.showResourceManagerFromNative === 'function')
+			window.showResourceManagerFromNative(UTF8ToString($0));
+	}, GetResourceFolderForDisplay().c_str());
+	return true;
+#endif
+
+	SDL_Init(SDL_INIT_VIDEO);
+
+	const std::string aMessage =
+		"Game resources were not found in:\n" + GetResourceFolderForDisplay() +
+		"\n\nPlace main.pak and the properties/ folder from your legally purchased "
+		"Plants vs. Zombies GOTY Edition copy in this folder, then restart the game.";
+
+	const SDL_MessageBoxButtonData aButtons[] = {
+		{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Open Folder" },
+		{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Quit" },
+	};
+	const SDL_MessageBoxData aMessageBox = {
+		SDL_MESSAGEBOX_INFORMATION,
+		static_cast<SDL_Window*>(mWindow),
+		"PvZ Portable Resource Manager",
+		aMessage.c_str(),
+		static_cast<int>(LENGTH(aButtons)),
+		aButtons,
+		nullptr
+	};
+
+	int aButton = 0;
+	SDL_ShowMessageBox(&aMessageBox, &aButton);
+	if (aButton == 1 && !OpenResourceFolder())
+	{
+		SDL_ShowSimpleMessageBox(
+			SDL_MESSAGEBOX_WARNING,
+			"PvZ Portable Resource Manager",
+			"Could not open the resource folder. Please open it manually and add main.pak plus properties/.",
+			static_cast<SDL_Window*>(mWindow));
+	}
+
+	return true;
+}
+
 void SexyAppBase::ShowResourceError(bool doExit)
 {
 	Popup(mResourceManager->GetErrorText());	
@@ -3329,6 +3487,13 @@ void SexyAppBase::Init()
 	if (!ChangeDirHook(mResourceDir.c_str()))
 	{
 		SetResourceFolder(mResourceDir);
+	}
+
+	if (!HasGameResources())
+	{
+		ShowResourceManager();
+		mShutdown = true;
+		return;
 	}
 
 	gPakInterface->AddPakFile(GetResourcePath("main.pak"));

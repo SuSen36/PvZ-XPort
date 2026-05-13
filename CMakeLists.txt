@@ -1,6 +1,21 @@
 cmake_minimum_required(VERSION 3.5...4.0)
 
+if(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "([/\\\\]|^)vcpkg\\.cmake$")
+	set(VCPKG_MANIFEST_MODE ON CACHE BOOL "Use vcpkg manifest mode to install dependencies from vcpkg.json")
+endif()
+
 project(pvz-portable LANGUAGES C CXX ASM)
+
+find_package(Python3 COMPONENTS Interpreter)
+
+set(PVZ_USING_VCPKG OFF)
+if(DEFINED VCPKG_TOOLCHAIN)
+	set(PVZ_USING_VCPKG ON)
+elseif(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "([/\\\\]|^)vcpkg\\.cmake$")
+	set(PVZ_USING_VCPKG ON)
+elseif(DEFINED VCPKG_INSTALLED_DIR)
+	set(PVZ_USING_VCPKG ON)
+endif()
 
 option(BUILD_STATIC "Static link for a standalone exe (Windows, non-MSVC)" OFF)
 if(BUILD_STATIC)
@@ -90,7 +105,7 @@ elseif(EMSCRIPTEN)
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/emscripten
 	)
 else()
-	if(VCPKG_TOOLCHAIN)
+	if(PVZ_USING_VCPKG)
 		find_package(Vorbis CONFIG REQUIRED)
 		find_package(Ogg CONFIG REQUIRED)
 		find_package(libopenmpt CONFIG REQUIRED)
@@ -132,6 +147,80 @@ option(PVZ_DEBUG "Enable _PVZ_DEBUG macro to enable cheats, hidden features, etc
 option(LIMBO_PAGE "Enable limbo page to access hidden levels" ON)
 option(CONSOLE "Show console on Windows" ${WIN_CONSOLE_DEFAULT})
 option(DO_FIX_BUGS "Define DO_FIX_BUGS macro (Community fixes for original game bugs of 1.2.0.1073 GOTY Edition)" OFF)
+option(PVZ_AUTO_PACK_RESOURCES "Pack resources from the res submodule during build" ON)
+set(PVZ_RESOURCE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE PATH "PvZ resource submodule path")
+set(PVZ_PACKED_RESOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/resources")
+
+function(pvz_configure_resources target)
+	if(NOT PVZ_AUTO_PACK_RESOURCES)
+		return()
+	endif()
+
+	if(NOT Python3_Interpreter_FOUND)
+		message(WARNING "Python3 was not found; skipping automatic resource packing.")
+		return()
+	endif()
+
+	set(_resource_config "${CMAKE_CURRENT_SOURCE_DIR}/resources/resource-pack.json")
+	set(_resource_stamp "${PVZ_PACKED_RESOURCE_DIR}/resource-pack.stamp")
+	set(_resource_pak "${PVZ_PACKED_RESOURCE_DIR}/main.pak")
+	file(MAKE_DIRECTORY "${PVZ_PACKED_RESOURCE_DIR}")
+
+	add_custom_target(pvz-pack-resources ALL
+		COMMAND "${Python3_EXECUTABLE}"
+			"${CMAKE_CURRENT_SOURCE_DIR}/tools/pack_resources.py"
+			--config "${_resource_config}"
+			--source "${PVZ_RESOURCE_SOURCE_DIR}"
+			--out "${PVZ_PACKED_RESOURCE_DIR}"
+			--stamp "${_resource_stamp}"
+		BYPRODUCTS
+			"${_resource_stamp}"
+			"${_resource_pak}"
+		DEPENDS
+			"${CMAKE_CURRENT_SOURCE_DIR}/tools/pack_resources.py"
+			"${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_resources.cmake"
+			"${_resource_config}"
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		COMMENT "Packing PvZ resources from ${PVZ_RESOURCE_SOURCE_DIR}"
+		VERBATIM
+	)
+
+	add_dependencies(${target} pvz-pack-resources)
+
+	if(ANDROID)
+		set(_stage_dir "${CMAKE_CURRENT_SOURCE_DIR}/android/app/src/main/assets")
+	elseif(EMSCRIPTEN)
+		target_link_options(${target} PRIVATE
+			"SHELL:--preload-file ${PVZ_PACKED_RESOURCE_DIR}@/"
+		)
+		set(_stage_dir "")
+	elseif(IOS)
+		set(_stage_dir "$<TARGET_BUNDLE_DIR:${target}>")
+	elseif(APPLE)
+		set(_stage_dir "$<TARGET_BUNDLE_CONTENT_DIR:${target}>/Resources")
+	elseif(NINTENDO_SWITCH)
+		set(_stage_dir "${CMAKE_CURRENT_BINARY_DIR}/switch/PvZPortable")
+	elseif(NINTENDO_3DS)
+		set(_stage_dir "${CMAKE_CURRENT_BINARY_DIR}/3ds/PvZPortable")
+	else()
+		set(_stage_dir "$<TARGET_FILE_DIR:${target}>")
+	endif()
+
+	if(_stage_dir)
+		add_custom_target(pvz-stage-resources ALL
+			COMMAND "${CMAKE_COMMAND}"
+				"-DSOURCE_DIR=${PVZ_PACKED_RESOURCE_DIR}"
+				"-DDEST_DIR=${_stage_dir}"
+				-P "${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_resources.cmake"
+			DEPENDS
+				pvz-pack-resources
+				${target}
+			COMMAND_EXPAND_LISTS
+			COMMENT "Staging PvZ resources to ${_stage_dir}"
+			VERBATIM
+		)
+	endif()
+endfunction()
 
 if(EMSCRIPTEN)
 	list(PREPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
@@ -351,3 +440,5 @@ elseif (IOS)
 			PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 	endif()
 endif()
+
+pvz_configure_resources(pvz-portable)

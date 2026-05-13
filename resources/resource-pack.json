@@ -1,0 +1,22 @@
+{
+  "sourceDir": "res",
+  "output": "main.pak",
+  "include": [
+    "**/*"
+  ],
+  "exclude": [
+    ".git/**",
+    ".git",
+    ".gitkeep",
+    "README.md",
+    "properties/**",
+    "main.pak",
+    "*.pak",
+    "*.md"
+  ],
+  "looseDirs": [
+    "properties"
+  ],
+  "copyLooseProperties": true,
+  "pakXorKey": "0xF7"
+}

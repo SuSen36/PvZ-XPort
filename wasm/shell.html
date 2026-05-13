@@ -220,6 +220,14 @@ window.moduleReadyPromise = new Promise(function(resolve, reject) {
     window._rejectModuleReady = reject;
 });
 
+window.showResourceManagerFromNative = function(resourceDir) {
+    console.warn('Game resources missing; showing resource manager for:', resourceDir);
+    document.getElementById('canvas-container').style.display = 'none';
+    document.getElementById('upload-screen').style.display = '';
+    document.body.classList.remove('game-mode');
+    document.body.classList.add('upload-mode');
+};
+
 var Module = {
     canvas: document.getElementById('canvas'),
     noInitialRun: true,

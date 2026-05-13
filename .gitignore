@@ -408,6 +408,8 @@ gdb_run
 gdb_run-start
 main.pak
 main.unpak
+android/app/src/main/assets/main.pak
+android/app/src/main/assets/properties/
 tools/res/
 tools/res-bak/
 tools/run/

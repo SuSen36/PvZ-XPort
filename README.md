@@ -61,7 +61,26 @@ This project supports the following platforms (including but not limited to):
 | Nintendo Switch | sdmc:/switch/PvZPortable | Works on real hardware. Kenji-NX crashes on boot.                           |
 | Nintendo 3DS    | sdmc:/3ds/PvZPortable    | Might not have enough memory for Old 3DS and barely work on New 3DS (discontionued) |
 
-To play the game, you need the game data from PvZ GOTY. Place `main.pak` and the `properties/` folder next to the `pvz-portable` executable (the game will search for resources relative to the executable's directory). You can also use extracted data instead of `main.pak` if you prefer.
+To play the game, you need the game data from PvZ GOTY. Place `main.pak` and the `properties/` folder next to the `pvz-portable` executable (the game will search for resources relative to the executable's directory). You can also use extracted data instead of `main.pak` if you prefer. If either `main.pak` or `properties/` is missing, PvZ Portable opens the resource manager instead of starting the game.
+
+### Optional resource submodule packing
+
+If you maintain a private resource repository, initialize it as the root `res/` submodule:
+
+```bash
+git submodule update --init --recursive res
+```
+
+During CMake builds, `PVZ_AUTO_PACK_RESOURCES` is enabled by default. When `res/` contains legal game resources, CMake runs `tools/pack_resources.py` with `resources/resource-pack.json`, generates `build/generated/resources/main.pak`, copies loose `properties/`, then stages the result for the active platform:
+
+- Linux / Windows: next to the built executable.
+- macOS: inside the `.app` bundle `Contents/Resources`.
+- iOS: inside the `.app` bundle.
+- Android: under `android/app/src/main/assets`.
+- WebAssembly: preloaded into the virtual filesystem root.
+- Switch / 3DS: under the build output's `PvZPortable` resource folder for SD-card deployment.
+
+If `res/` is missing or empty, packing is skipped and the runtime resource manager remains the fallback. Use `-DPVZ_AUTO_PACK_RESOURCES=OFF` to disable this build step.
 
 Note about writable data and caches:
 
@@ -177,6 +196,18 @@ You can install the required dependencies using the following command:
 ```bash
 sudo apt install cmake ninja-build libogg-dev libjpeg-dev libopenmpt-dev libpng-dev libvorbis-dev libmpg123-dev libsdl2-dev
 ```
+
+### Windows (Visual Studio / CLion / vcpkg)
+
+When using Visual Studio, CLion, or any CMake command with the vcpkg toolchain file, dependencies are installed from `vcpkg.json` automatically during CMake configure:
+
+```powershell
+cmake -G "Visual Studio 17 2022" `
+  -DCMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake `
+  -S . -B build
+```
+
+If you want a standalone MSVC executable, use a static vcpkg triplet, for example `-DVCPKG_TARGET_TRIPLET=x64-windows-static`.
 
 ### Windows (MSYS2 UCRT64)
 
