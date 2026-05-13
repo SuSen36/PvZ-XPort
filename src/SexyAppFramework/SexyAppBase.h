@@ -531,6 +531,8 @@ public:
 	virtual void			InitPropertiesHook();
 
 	// Resource access methods
+	bool					HasGameResources() const;
+	bool					ShowResourceManager();
 	void					LoadResourceManifest();
 	void					ShowResourceError(bool doExit = false);
 	

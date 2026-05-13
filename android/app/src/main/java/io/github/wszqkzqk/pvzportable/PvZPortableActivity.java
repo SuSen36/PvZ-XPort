@@ -29,7 +29,6 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import android.view.WindowManager;
 
 import org.libsdl.app.SDLActivity;
 
@@ -43,13 +42,6 @@ public class PvZPortableActivity extends SDLActivity {
         File extDir = getExternalFilesDir(null);
         if (extDir != null && !extDir.exists()) extDir.mkdirs();
         Log.i(TAG, "Resource dir: " + (extDir != null ? extDir.getAbsolutePath() : "null"));
-
-        if (!hasGameResources(extDir)) {
-            super.onCreate(savedInstanceState);
-            startActivity(new Intent(this, ResourceImportActivity.class));
-            finish();
-            return;
-        }
 
         super.onCreate(savedInstanceState);
         hideSystemUI();
@@ -90,18 +82,19 @@ public class PvZPortableActivity extends SDLActivity {
         };
     }
 
+    public void openResourceManager() {
+        runOnUiThread(() -> {
+            Intent intent = new Intent(this, ResourceImportActivity.class);
+            startActivity(intent);
+            finish();
+        });
+    }
+
     @Override
     public void setRequestedOrientation(int requestedOrientation) {
         if (requestedOrientation == android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE) {
             requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
         }
         super.setRequestedOrientation(requestedOrientation);
-    }
-
-    private static boolean hasGameResources(File dir) {
-        if (dir == null || !dir.isDirectory()) return false;
-        File pak = new File(dir, "main.pak");
-        File props = new File(dir, "properties");
-        return pak.exists() && props.isDirectory();
     }
 }

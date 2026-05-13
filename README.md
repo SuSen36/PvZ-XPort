@@ -61,7 +61,7 @@ This project supports the following platforms (including but not limited to):
 | Nintendo Switch | sdmc:/switch/PvZPortable | Works on real hardware. Kenji-NX crashes on boot.                           |
 | Nintendo 3DS    | sdmc:/3ds/PvZPortable    | Might not have enough memory for Old 3DS and barely work on New 3DS (discontionued) |
 
-To play the game, you need the game data from PvZ GOTY. Place `main.pak` and the `properties/` folder next to the `pvz-portable` executable (the game will search for resources relative to the executable's directory). You can also use extracted data instead of `main.pak` if you prefer.
+To play the game, you need the game data from PvZ GOTY. Place `main.pak` and the `properties/` folder next to the `pvz-portable` executable (the game will search for resources relative to the executable's directory). You can also use extracted data instead of `main.pak` if you prefer. If either `main.pak` or `properties/` is missing, PvZ Portable opens the resource manager instead of starting the game.
 
 Note about writable data and caches:
 
