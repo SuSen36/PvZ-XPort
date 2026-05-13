@@ -1,21 +1,24 @@
 cmake_minimum_required(VERSION 3.5...4.0)
 
-if(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "([/\\\\]|^)vcpkg\\.cmake$")
+option(PVZ_ENABLE_OPENMPT "Enable optional libopenmpt support for MO3/tracker music" OFF)
+
+if((DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "([/\\\\]|^)vcpkg\\.cmake$") OR DEFINED VCPKG_TOOLCHAIN)
 	set(VCPKG_MANIFEST_MODE ON CACHE BOOL "Use vcpkg manifest mode to install dependencies from vcpkg.json")
+	if(PVZ_ENABLE_OPENMPT)
+		if(DEFINED VCPKG_MANIFEST_FEATURES AND NOT VCPKG_MANIFEST_FEATURES STREQUAL "")
+			list(FIND VCPKG_MANIFEST_FEATURES "openmpt" _pvz_openmpt_feature_index)
+			if(_pvz_openmpt_feature_index EQUAL -1)
+				set(VCPKG_MANIFEST_FEATURES "${VCPKG_MANIFEST_FEATURES};openmpt" CACHE STRING "vcpkg manifest features" FORCE)
+			endif()
+		else()
+			set(VCPKG_MANIFEST_FEATURES "openmpt" CACHE STRING "vcpkg manifest features" FORCE)
+		endif()
+	endif()
 endif()
 
 project(pvz-portable LANGUAGES C CXX ASM)
 
 find_package(Python3 COMPONENTS Interpreter)
-
-set(PVZ_USING_VCPKG OFF)
-if(DEFINED VCPKG_TOOLCHAIN)
-	set(PVZ_USING_VCPKG ON)
-elseif(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "([/\\\\]|^)vcpkg\\.cmake$")
-	set(PVZ_USING_VCPKG ON)
-elseif(DEFINED VCPKG_INSTALLED_DIR)
-	set(PVZ_USING_VCPKG ON)
-endif()
 
 option(BUILD_STATIC "Static link for a standalone exe (Windows, non-MSVC)" OFF)
 if(BUILD_STATIC)
@@ -70,7 +73,6 @@ list(REMOVE_ITEM SOURCES
 set(LOW_MEMORY OFF CACHE BOOL "Enable low memory mode")
 set(DOWNSCALE_COUNT 1 CACHE STRING "Image downscale count")
 if(NINTENDO_SWITCH)
-	set(VORBIS_LIB vorbisfile vorbis)
 	list(APPEND SOURCES
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/switch/Window.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/switch/Input.cpp
@@ -93,10 +95,6 @@ elseif(NINTENDO_3DS)
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/3ds
 	)
 elseif(EMSCRIPTEN)
-	# libopenmpt has no Emscripten port; must be pre-built with emmake.
-	find_library(OPENMPT_LIBRARY NAMES openmpt libopenmpt REQUIRED)
-	set(OPENMPT_LIB ${OPENMPT_LIBRARY})
-
 	list(APPEND SOURCES
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/emscripten/Window.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/default/Input.cpp
@@ -105,27 +103,6 @@ elseif(EMSCRIPTEN)
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/emscripten
 	)
 else()
-	if(PVZ_USING_VCPKG)
-		find_package(Vorbis CONFIG REQUIRED)
-		find_package(Ogg CONFIG REQUIRED)
-		find_package(libopenmpt CONFIG REQUIRED)
-		find_package(mpg123 CONFIG REQUIRED)
-		set(VORBIS_LIB Vorbis::vorbis Vorbis::vorbisfile)
-		set(OGG_LIB Ogg::ogg)
-		set(OPENMPT_LIB libopenmpt::libopenmpt)
-		set(MPG123_LIB MPG123::libmpg123)
-	else()
-		find_library(OGG_LIBRARY NAMES ogg libogg REQUIRED)
-		find_library(VORBIS_LIBRARY NAMES vorbis libvorbis REQUIRED)
-		find_library(VORBISFILE_LIBRARY NAMES vorbisfile libvorbisfile REQUIRED)
-		find_library(OPENMPT_LIBRARY NAMES openmpt libopenmpt REQUIRED)
-		find_library(MPG123_LIBRARY NAMES mpg123 libmpg123 REQUIRED)
-
-		set(VORBIS_LIB ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY})
-		set(OGG_LIB ${OGG_LIBRARY})
-		set(OPENMPT_LIB ${OPENMPT_LIBRARY})
-		set(MPG123_LIB ${MPG123_LIBRARY})
-	endif()
 	list(APPEND SOURCES
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/default/Window.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/platform/default/Input.cpp
@@ -261,12 +238,16 @@ endif()
 
 set(SDL_MIXER_X_STATIC ON CACHE BOOL "Build static library of SDL Mixer X")
 set(SDL_MIXER_X_SHARED OFF CACHE BOOL "Build shared library of SDL Mixer X")
+set(USE_OPENMPT ${PVZ_ENABLE_OPENMPT} CACHE BOOL "SDL Mixer X OpenMPT" FORCE)
 set(USE_MIDI OFF CACHE BOOL "SDL Mixer X midi")
 set(USE_MODPLUG OFF CACHE BOOL "SDL Mixer X modplug")
 set(USE_XMP OFF CACHE BOOL "SDL Mixer X xmp")
 set(USE_OPUS OFF CACHE BOOL "SDL Mixer X opus")
 set(USE_DRFLAC OFF CACHE BOOL "SDL Mixer X flac")
 set(USE_PXTONE OFF CACHE BOOL "SDL Mixer X pxtone")
+set(USE_MP3_DRMP3 ON CACHE BOOL "SDL Mixer X dr_mp3" FORCE)
+set(USE_MP3_MPG123 OFF CACHE BOOL "SDL Mixer X mpg123" FORCE)
+set(USE_OGG_VORBIS_STB ON CACHE BOOL "SDL Mixer X stb_vorbis" FORCE)
 add_subdirectory(src/SexyAppFramework/sound/SDL-Mixer-X)
 
 # Patch SDL-Mixer-X's transitive SDL2 dep without touching vendored CMake files
@@ -308,16 +289,12 @@ if(EMSCRIPTEN)
 	)
 	target_link_libraries(pvz-portable PRIVATE
 		SDL2_mixer_ext_Static
-		${OPENMPT_LIB}
 	)
 	target_link_options(pvz-portable PRIVATE
 		"SHELL:-sUSE_SDL=2"
 		"SHELL:-sUSE_ZLIB=1"
 		"SHELL:-sUSE_LIBPNG=1"
 		"SHELL:-sUSE_LIBJPEG=1"
-		"SHELL:-sUSE_OGG=1"
-		"SHELL:-sUSE_VORBIS=1"
-		"SHELL:-sUSE_MPG123=1"
 		"SHELL:-sASYNCIFY"
 		"SHELL:-sALLOW_MEMORY_GROWTH=1"
 		"SHELL:-sMAXIMUM_MEMORY=1073741824"
@@ -331,10 +308,6 @@ if(EMSCRIPTEN)
 else()
 	target_link_libraries(pvz-portable PRIVATE
 		SDL2_mixer_ext_Static 
-		${OPENMPT_LIB} 
-		${MPG123_LIB} 
-		${VORBIS_LIB} 
-		${OGG_LIB} 
 		PNG::PNG
 		JPEG::JPEG
 		ZLIB::ZLIB
