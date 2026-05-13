@@ -127,6 +127,7 @@ option(CONSOLE "Show console on Windows" ${WIN_CONSOLE_DEFAULT})
 option(DO_FIX_BUGS "Define DO_FIX_BUGS macro (Community fixes for original game bugs of 1.2.0.1073 GOTY Edition)" OFF)
 option(PVZ_AUTO_PACK_RESOURCES "Pack resources from the res submodule during build" ON)
 option(PVZ_AUTO_INIT_RESOURCE_SUBMODULE "Automatically initialize the res submodule when configuring resources" ON)
+option(PVZ_AUTO_INIT_BUNDLED_DEPS "Automatically initialize bundled dependency submodules when configuring" ON)
 option(PVZ_USE_BUNDLED_DEPS "Build common dependencies from libs/ submodules" ON)
 set(PVZ_RESOURCE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE PATH "PvZ resource submodule path")
 set(PVZ_PACKED_RESOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/resources")
@@ -176,6 +177,21 @@ endif()
 set(PVZ_BUILD_SHARED_DEPS ${PVZ_BUILD_SHARED_DEPS} CACHE BOOL "Build bundled dependencies as shared libraries")
 
 function(pvz_require_bundled_dep dep dir)
+if(PVZ_AUTO_INIT_BUNDLED_DEPS AND NOT EXISTS "${PROJECT_SOURCE_DIR}/libs/${dir}/CMakeLists.txt")
+if(EXISTS "${PROJECT_SOURCE_DIR}/.gitmodules" AND Git_FOUND)
+message(STATUS "Bundled ${dep} submodule is not initialized; running git submodule update --init --recursive libs/${dir}")
+execute_process(
+COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive "libs/${dir}"
+WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+RESULT_VARIABLE _pvz_dep_submodule_result
+OUTPUT_VARIABLE _pvz_dep_submodule_stdout
+ERROR_VARIABLE _pvz_dep_submodule_stderr
+)
+if(NOT _pvz_dep_submodule_result EQUAL 0)
+message(WARNING "Failed to initialize libs/${dir} automatically.\n${_pvz_dep_submodule_stdout}\n${_pvz_dep_submodule_stderr}")
+endif()
+endif()
+endif()
 	if(NOT EXISTS "${PROJECT_SOURCE_DIR}/libs/${dir}/CMakeLists.txt")
 		message(FATAL_ERROR "Missing libs/${dir}. Run: git submodule update --init --recursive libs/${dir}")
 	endif()
