@@ -60,5 +60,5 @@ package() {
     install -Dm644 "${pkgname}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
     install -Dm644 "${pkgname}/COPYING" "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"
     install -Dm644 "io.github.wszqkzqk.pvz-portable.desktop" "${pkgdir}/usr/share/applications/io.github.wszqkzqk.pvz-portable.desktop"
-    install -Dm644 "${pkgname}/icon.png" "${pkgdir}/usr/share/pixmaps/io.github.wszqkzqk.pvz-portable.png"
+    install -Dm644 "${pkgname}/res/icon/linux.png" "${pkgdir}/usr/share/pixmaps/io.github.wszqkzqk.pvz-portable.png"
 }

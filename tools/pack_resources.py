@@ -45,6 +45,7 @@ def _load_config(path: Path) -> dict:
                 ".git/**",
                 ".git",
                 ".gitkeep",
+                "icon/**",
                 "README.md",
                 "properties/**",
                 "main.pak",

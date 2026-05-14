@@ -8,6 +8,7 @@
     ".git/**",
     ".git",
     ".gitkeep",
+    "icon/**",
     "README.md",
     "properties/**",
     "main.pak",
