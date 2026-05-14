@@ -35,6 +35,26 @@ def _parse_xor_key(value: object) -> int:
 
 
 def _load_config(path: Path) -> dict:
+    if not path.exists():
+        print(f"Resource pack config is missing, using built-in defaults: {path}", file=sys.stderr)
+        return {
+            "sourceDir": "res",
+            "output": "main.pak",
+            "include": ["**/*"],
+            "exclude": [
+                ".git/**",
+                ".git",
+                ".gitkeep",
+                "README.md",
+                "properties/**",
+                "main.pak",
+                "*.pak",
+                "*.md",
+            ],
+            "looseDirs": ["properties"],
+            "copyLooseProperties": True,
+            "pakXorKey": "0xF7",
+        }
     with path.open("r", encoding="utf-8") as file:
         return json.load(file)
 
