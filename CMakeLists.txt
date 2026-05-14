@@ -131,6 +131,7 @@ option(PVZ_AUTO_INIT_BUNDLED_DEPS "Automatically initialize bundled dependency s
 option(PVZ_REQUIRE_BUNDLED_DEPS "Fail configure if bundled dependency submodules are unavailable instead of falling back to system packages" OFF)
 option(PVZ_USE_BUNDLED_DEPS "Build common dependencies from libs/ submodules" ON)
 set(PVZ_RESOURCE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE PATH "PvZ resource submodule path")
+set(PVZ_RESOURCE_PACK_CONFIG "${CMAKE_CURRENT_SOURCE_DIR}/resources/resource-pack.json" CACHE FILEPATH "Resource pack configuration JSON path")
 set(PVZ_PACKED_RESOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/resources")
 
 function(pvz_maybe_init_resource_submodule)
@@ -416,9 +417,18 @@ function(pvz_configure_resources target)
 		return()
 	endif()
 
-	set(_resource_config "${CMAKE_CURRENT_SOURCE_DIR}/resources/resource-pack.json")
+	set(_resource_config "${PVZ_RESOURCE_PACK_CONFIG}")
 	set(_resource_stamp "${PVZ_PACKED_RESOURCE_DIR}/resource-pack.stamp")
 	set(_resource_pak "${PVZ_PACKED_RESOURCE_DIR}/main.pak")
+	set(_resource_depends
+		"${CMAKE_CURRENT_SOURCE_DIR}/tools/pack_resources.py"
+		"${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_resources.cmake"
+	)
+	if(EXISTS "${_resource_config}")
+		list(APPEND _resource_depends "${_resource_config}")
+	else()
+		message(WARNING "Resource pack config was not found at ${_resource_config}; built-in defaults will be used.")
+	endif()
 	file(MAKE_DIRECTORY "${PVZ_PACKED_RESOURCE_DIR}")
 
 	add_custom_target(pvz-pack-resources ALL
@@ -432,9 +442,7 @@ function(pvz_configure_resources target)
 			"${_resource_stamp}"
 			"${_resource_pak}"
 		DEPENDS
-			"${CMAKE_CURRENT_SOURCE_DIR}/tools/pack_resources.py"
-			"${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_resources.cmake"
-			"${_resource_config}"
+			${_resource_depends}
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 		COMMENT "Packing PvZ resources from ${PVZ_RESOURCE_SOURCE_DIR}"
 		VERBATIM
