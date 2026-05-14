@@ -635,6 +635,8 @@ else()
 	endif()
 endif()
 
+pvz_maybe_init_resource_submodule()
+
 if (WIN32)
 	if(MSVC)
 		target_compile_options(pvz-portable PRIVATE /utf-8)

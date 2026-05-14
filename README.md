@@ -82,7 +82,7 @@ During CMake builds, `PVZ_AUTO_PACK_RESOURCES` and `PVZ_AUTO_INIT_RESOURCE_SUBMO
 
 If `res/` is missing or empty, or Git is unavailable, packing is skipped and the runtime resource manager remains the fallback. Use `-DPVZ_AUTO_PACK_RESOURCES=OFF` to disable this build step, or `-DPVZ_AUTO_INIT_RESOURCE_SUBMODULE=OFF` to skip the automatic submodule update.
 
-App icons are stored under `res/icon/`. To regenerate them from a legally obtained official Windows executable, run:
+App icons are stored under `res/icon/`. To regenerate them from a legally obtained official Windows executable, install Pillow and run:
 
 ```bash
 python scripts/extract-pvz-icon.py "/path/to/PlantsVsZombies.exe" --out res/icon
