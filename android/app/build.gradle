@@ -65,6 +65,10 @@ android {
                 'src/main/java',
                 "${project.rootDir}/../sdl2-src/android-project/app/src/main/java"
             ]
+            res.srcDirs = [
+                'src/main/res',
+                "${project.rootDir}/../res/icon/android/res"
+            ]
         }
     }
 

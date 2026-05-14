@@ -133,9 +133,10 @@ option(PVZ_USE_BUNDLED_DEPS "Build common dependencies from libs/ submodules" ON
 set(PVZ_RESOURCE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE PATH "PvZ resource submodule path")
 set(PVZ_RESOURCE_PACK_CONFIG "${CMAKE_CURRENT_SOURCE_DIR}/resources/resource-pack.json" CACHE FILEPATH "Resource pack configuration JSON path")
 set(PVZ_PACKED_RESOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/resources")
+set(PVZ_ICON_DIR "${PVZ_RESOURCE_SOURCE_DIR}/icon" CACHE PATH "PvZ app icon directory")
 
 function(pvz_maybe_init_resource_submodule)
-	if(NOT PVZ_AUTO_PACK_RESOURCES OR NOT PVZ_AUTO_INIT_RESOURCE_SUBMODULE)
+	if(NOT PVZ_AUTO_INIT_RESOURCE_SUBMODULE)
 		return()
 	endif()
 	if(NOT PVZ_RESOURCE_SOURCE_DIR STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/res")
@@ -644,8 +645,8 @@ if (WIN32)
 	set_source_files_properties(
 		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/LawnProject.rc
 		PROPERTIES
-			COMPILE_DEFINITIONS "APP_ICON_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/icon.ico\""
-			OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/icon.ico"
+			COMPILE_DEFINITIONS "APP_ICON_PATH=\"${PVZ_ICON_DIR}/app.ico\""
+			OBJECT_DEPENDS "${PVZ_ICON_DIR}/app.ico"
 	)
 
 	target_link_libraries(pvz-portable PRIVATE ws2_32 user32 gdi32 winmm imm32 shlwapi)
@@ -669,7 +670,7 @@ elseif (NINTENDO_SWITCH)
 
 	nx_create_nro(pvz-portable
 		NACP pvz-portable.nacp
-		ICON ${CMAKE_CURRENT_SOURCE_DIR}/icon-switch.jpg
+		ICON ${PVZ_ICON_DIR}/switch.jpg
 	)
 elseif (NINTENDO_3DS)
 	target_link_libraries(pvz-portable PRIVATE citro3d shaders)
@@ -679,7 +680,7 @@ elseif (NINTENDO_3DS)
 		DESCRIPTION "A community-driven re-implementation of Plants vs. Zombies GOTY Edition"
 		AUTHOR "wszqkzqk, etc., a community-driven port"
 		VERSION "0.1"
-		ICON "${CMAKE_CURRENT_SOURCE_DIR}/icon-3ds.png"
+		ICON "${PVZ_ICON_DIR}/3ds.png"
 	)
 
 	ctr_create_3dsx(pvz-portable
@@ -724,9 +725,9 @@ elseif (IOS)
 	endif()
 
 	# Add asset catalog (app icon)
-	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ios/Assets.xcassets")
-		target_sources(pvz-portable PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ios/Assets.xcassets")
-		set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/ios/Assets.xcassets"
+	if(EXISTS "${PVZ_ICON_DIR}/ios/Assets.xcassets")
+		target_sources(pvz-portable PRIVATE "${PVZ_ICON_DIR}/ios/Assets.xcassets")
+		set_source_files_properties("${PVZ_ICON_DIR}/ios/Assets.xcassets"
 			PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 	endif()
 endif()
