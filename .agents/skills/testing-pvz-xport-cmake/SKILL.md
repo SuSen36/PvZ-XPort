@@ -42,6 +42,32 @@ Expected:
 - `git diff --check` exits 0.
 - Working tree is clean except intentional edits.
 
+## Bundled shared dependency / Android-relevant regression
+
+Use this when validating changes to bundled dependencies, target aliases, or Android CI failures related to shared dependency builds. Android defaults `PVZ_BUILD_SHARED_DEPS=ON`, but the path can be smoke-tested on Linux without an Android toolchain by forcing shared bundled dependencies:
+
+```bash
+rm -rf /home/ubuntu/pvz-shared-deps-test
+cmake -S /path/to/PvZ-XPort \
+  -B /home/ubuntu/pvz-shared-deps-test \
+  -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DPVZ_AUTO_PACK_RESOURCES=OFF \
+  -DPVZ_BUILD_SHARED_DEPS=ON 2>&1 | tee /home/ubuntu/pvz-shared-configure.log
+cmake --build /home/ubuntu/pvz-shared-deps-test --target pvz-portable -j2 2>&1 | tee /home/ubuntu/pvz-shared-build.log
+grep -F "PVZ_BUILD_SHARED_DEPS:BOOL=ON" /home/ubuntu/pvz-shared-deps-test/CMakeCache.txt
+test -x /home/ubuntu/pvz-shared-deps-test/pvz-portable
+```
+
+Expected:
+- Configure exits 0.
+- `CMakeCache.txt` contains `PVZ_BUILD_SHARED_DEPS:BOOL=ON`.
+- The configure log does not contain old target-alias failures such as `ALIAS target "PNG::PNG" because target "png_static" does not already exist`.
+- The build log shows shared dependency targets linking when applicable, for example `libs/libpng/libpng16.so`.
+- `pvz-portable` exists and is executable.
+
+If the target platform is macOS, Android, iOS, Windows, or WebAssembly, also use PR CI as the source of truth for platform-specific generator expressions, toolchains, packaging, and codesigning behavior that Linux cannot fully emulate.
+
 ## Simplified audio dependency checks
 
 Use this when validating changes that reduce required audio packages. The default build should use SDL Mixer X built-in codecs and should not require `libogg`, `libvorbis`, `mpg123`, or `libopenmpt`.
@@ -157,6 +183,8 @@ Expected:
 ## Reporting
 
 For shell-only tests, do not record the desktop. Provide command output snippets or rendered screenshots of terminal logs in the test report.
+
+For long CMake builds, capture logs with `tee` or redirect output to a file and record a status file. If a high-parallelism build stops producing monitorable output, inspect the build log and process list before rerunning; it is usually safe to resume the same Ninja build directory with lower parallelism (for example `-j2`) and report that clearly.
 
 When testing an open PR, post one PR comment with:
 - Escalations and environment limits first.
