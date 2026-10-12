@@ -302,12 +302,10 @@ void LawnApp::GotFocus()
 
 void LawnApp::LostFocus()
 {
-#if (defined(__ANDROID__) && !defined(__TERMUX__)) || defined(__IPHONEOS__)
-	if (!mCheatKeys && CanPauseNow())
+	if (mAutoPause && !mCheatKeys && CanPauseNow())
 	{
 		DoPauseDialog();
 	}
-#endif
 }
 
 void LawnApp::WriteToRegistry()
@@ -1060,8 +1058,8 @@ bool LawnApp::KillNewOptionsDialog()
 		return false;
 
 	bool wantWindowed = !aNewOptionsDialog->mFullscreenCheckbox->IsChecked();
-	bool want3D = aNewOptionsDialog->mHardwareAccelerationCheckbox->IsChecked();
-	SwitchScreenMode(wantWindowed, want3D, false);
+	mAutoPause = aNewOptionsDialog->mAutoPauseCheckbox->IsChecked();
+	SwitchScreenMode(wantWindowed, Is3DAccelerated(), false);
 
 	KillDialog(Dialogs::DIALOG_NEWOPTIONS);
 	ClearUpdateBacklog();
@@ -1637,7 +1635,7 @@ void LawnApp::LoadingThreadProc()
 	if (!PvzpLoadResources("LoaderBar"))
 		return;
 
-	PvzpStringListLoad("Properties/LawnStrings.txt");
+	LoadProperties("properties/LawnStrings.xml", true, false);
 	PvzpStringListReadFile("Properties/ZombatarTOS.txt");
 
 	// Load localized properties AFTER LawnStrings so they can override string values

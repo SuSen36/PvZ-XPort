@@ -43,7 +43,7 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
 	mFromGameSelector = theFromGameSelector;
 	SetButtonTextColor(Color(255, 255, 100));
 	mAlmanacButton = MakeButton(NewOptionsDialog::NewOptionsDialog_Almanac, this, "[VIEW_ALMANAC_BUTTON]");
-	mRestartButton = MakeButton(NewOptionsDialog::NewOptionsDialog_Restart, this, "[RESTART_LEVEL]");
+	mRestartButton = MakeButton(NewOptionsDialog::NewOptionsDialog_Restart, this, "[RESTART_LEVEL_BUTTON]");
 	mBackToMainButton = MakeButton(NewOptionsDialog::NewOptionsDialog_MainMenu, this, "[MAIN_MENU_BUTTON]");
 
 	mBackToGameButton = MakeNewButton(
@@ -75,7 +75,7 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
 	mSfxVolumeSlider->SetValue(theApp->GetSfxVolume() / 0.65);
 
 	mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, !theApp->mIsWindowed);
-	mHardwareAccelerationCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_HardwareAcceleration, this, theApp->Is3DAccelerated());
+	mAutoPauseCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_AutoPause, this, theApp->mAutoPause);
 
 	if (mFromGameSelector)
 	{
@@ -126,7 +126,7 @@ void NewOptionsDialog::AddedToManager(Sexy::WidgetManager* theWidgetManager)
 	AddWidget(mBackToMainButton.get());
 	AddWidget(mMusicVolumeSlider.get());
 	AddWidget(mSfxVolumeSlider.get());
-	AddWidget(mHardwareAccelerationCheckbox.get());
+	AddWidget(mAutoPauseCheckbox.get());
 	AddWidget(mFullscreenCheckbox.get());
 	AddWidget(mBackToGameButton.get());
 }
@@ -138,7 +138,7 @@ void NewOptionsDialog::RemovedFromManager(Sexy::WidgetManager* theWidgetManager)
 	RemoveWidget(mMusicVolumeSlider.get());
 	RemoveWidget(mSfxVolumeSlider.get());
 	RemoveWidget(mFullscreenCheckbox.get());
-	RemoveWidget(mHardwareAccelerationCheckbox.get());
+	RemoveWidget(mAutoPauseCheckbox.get());
 	RemoveWidget(mBackToMainButton.get());
 	RemoveWidget(mBackToGameButton.get());
 	RemoveWidget(mRestartButton.get());
@@ -149,7 +149,7 @@ void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
 	Dialog::Resize(theX, theY, theWidth, theHeight);
 	mMusicVolumeSlider->Resize(199, 116, 135, 40);
 	mSfxVolumeSlider->Resize(199, 143, 135, 40);
-	mHardwareAccelerationCheckbox->Resize(283, 175, 46, 45);
+	mAutoPauseCheckbox->Resize(283, 175, 46, 45);
 	mFullscreenCheckbox->Resize(284, 206, 46, 45);
 	mAlmanacButton->Resize(107, 241, 209, 46);
 	mRestartButton->Resize(mAlmanacButton->mX, mAlmanacButton->mY + 43, 209, 46);
@@ -160,7 +160,7 @@ void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
 	{
 		mMusicVolumeSlider->mY += 5;
 		mSfxVolumeSlider->mY += 10;
-		mHardwareAccelerationCheckbox->mY += 15;
+		mAutoPauseCheckbox->mY += 15;
 		mFullscreenCheckbox->mY += 20;
 	}
 
@@ -176,13 +176,13 @@ void NewOptionsDialog::Draw(Sexy::Graphics* g)
 
 	int aMusicOffset = 0;
 	int aSfxOffset = 0;
-	int a3DAccelOffset = 0;
+	int aAutoPauseOffset = 0;
 	int aFullScreenOffset = 0;
 	if (mFromGameSelector)
 	{
 		aMusicOffset = 5;
 		aSfxOffset = 10;
-		a3DAccelOffset = 15;
+		aAutoPauseOffset = 15;
 		aFullScreenOffset = 20;
 	}
 	Sexy::Color aTextColor(107, 109, 145);
@@ -194,7 +194,7 @@ void NewOptionsDialog::Draw(Sexy::Graphics* g)
 		g->SetScale(aFontScale, aFontScale, 0.0f, 0.0f);
 	PvzpDrawString(g, mApp->GetString("OPTIONS_MUSIC_LABEL", "Music"), aSliderLabelsX, 140 + aMusicOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
 	PvzpDrawString(g, mApp->GetString("OPTIONS_SOUNDFX", "Sound FX"), aSliderLabelsX, 167 + aSfxOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
-	PvzpDrawString(g, mApp->GetString("OPTIONS_3D_ACCELERATION", "3D Acceleration"), aCheckboxLabelsX, 197 + a3DAccelOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+	PvzpDrawString(g, mApp->GetString("OPTIONS_AUTO_PAUSE", "Auto Pause"), aCheckboxLabelsX, 197 + aAutoPauseOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
 	PvzpDrawString(g, mApp->GetString("OPTIONS_FULL_SCREEN", "Full Screen"), aCheckboxLabelsX, 229 + aFullScreenOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
 	if (aFontScale != 1.0f)
 		g->SetScale(1.0f, 1.0f, 0.0f, 0.0f);
@@ -240,41 +240,6 @@ void NewOptionsDialog::CheckboxChecked(int theId, bool checked)
 			);
 
 			mFullscreenCheckbox->SetChecked(true, false);
-		}
-		break;
-
-	case NewOptionsDialog::NewOptionsDialog_HardwareAcceleration:
-		if (checked)
-		{
-			if (!mApp->Is3DAccelerationSupported())
-			{
-				mHardwareAccelerationCheckbox->SetChecked(false, false);
-				mApp->DoDialog(
-					Dialogs::DIALOG_INFO,
-					true,
-					mApp->GetString("NOT_SUPPORTED", "Not Supported"),
-					mApp->GetString("HARDWARE_ACCELERATION_NOT_SUPPORTED",
-						"Hardware Acceleration cannot be enabled on this computer.\n\n"
-						"Your video card does not\n"
-						"meet the minimum requirements\n"
-						"for this game."),
-					"[DIALOG_BUTTON_OK]",
-					Dialog::BUTTONS_FOOTER
-				);
-			}
-			else if (!mApp->Is3DAccelerationRecommended())
-			{
-				mApp->DoDialog(
-					Dialogs::DIALOG_INFO,
-					true,
-					mApp->GetString("DIALOG_WARNING", "Warning"),
-					mApp->GetString("SLOW_PERFORMANCE",
-						"Your video card may not fully support this feature.\n\n"
-						"If you experience slower performance, please disable Hardware Acceleration."),
-					"[DIALOG_BUTTON_OK]",
-					Dialog::BUTTONS_FOOTER
-				);
-			}
 		}
 		break;
 	}

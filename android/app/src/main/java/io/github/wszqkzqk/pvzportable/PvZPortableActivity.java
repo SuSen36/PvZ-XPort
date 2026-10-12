@@ -156,7 +156,6 @@ public class PvZPortableActivity extends SDLActivity {
     private static boolean hasGameResources(File dir) {
         if (dir == null || !dir.isDirectory()) return false;
         File pak = new File(dir, "main.pak");
-        File props = new File(dir, "properties");
-        return pak.exists() && props.isDirectory();
+        return pak.exists();
     }
 }

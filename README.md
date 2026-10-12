@@ -16,7 +16,7 @@ A **cross-platform** community-driven reimplementation of Plants vs. Zombies: Ga
 
 **⚠️ Notice:**
 
-* This repository does **NOT** contain any copyrighted game assets (such as images, music, or fonts) owned by PopCap Games or Electronic Arts. Users must provide their own `main.pak` and `properties/` folder from a **legally purchased copy** of Plants vs. Zombies: GOTY Edition.
+* This repository does **NOT** contain any copyrighted game assets (such as images, music, or fonts) owned by PopCap Games or Electronic Arts. Users must provide their own `main.pak` from a **legally purchased copy** of Plants vs. Zombies: GOTY Edition.
 * The codebase is a manual reimplementation derived from community research (such as [植物大战僵尸吧](https://tieba.baidu.com/f?ie=utf-8&kw=%E6%A4%8D%E7%89%A9%E5%A4%A7%E6%88%98%E5%83%B5%E5%B0%B8), [PVZ Wiki](https://wiki.pvz1.com/doku.php?id=home) and [PvZ Tools](https://pvz.tools/memory/)). It is written to utilize portable backends like SDL2 and OpenGL ES 2.0 (with desktop OpenGL 2.1 fallback). The author (wszqkzqk) **NEVER reverse engineered** the program; the author wrote it solely based on publicly available information and game testing. Also, code generated directly through reverse engineering will **not be accepted**.
 * This project is intended solely for **educational purposes**, focusing on **cross-platform porting techniques**, engine modernization, and learning how classic game logic can be adapted to various hardware architectures.
 * Non-Commercial: This project is not affiliated with, authorized, or endorsed by PopCap Games or Electronic Arts.
@@ -63,11 +63,11 @@ This project supports the following platforms (including but not limited to):
 | Web (WASM)      | Browser IndexedDB (saves); resources uploaded at runtime    | Works (requires a HTTP server) |
 | Nintendo Switch | sdmc:/switch/PvZPortable | Works on real hardware. Kenji-NX crashes on boot.                           |
 
-To play the game, you need the game data from PvZ GOTY. Place `main.pak` and the `properties/` folder next to the `pvz-portable` executable (the game will search for resources relative to the executable's directory). You can also use extracted data instead of `main.pak` if you prefer.
+To play the game, you need the game data from PvZ GOTY. Place `main.pak` next to the `pvz-portable` executable (the game will search for resources relative to the executable's directory).
 
 Note about writable data and caches:
 
-- The game will read resources (like `main.pak` and `properties/`) from the executable directory by default, so you can launch the binary from any working directory and it will still find them.
+- The game will read resources (like `main.pak`) from the executable directory by default, so you can launch the binary from any working directory and it will still find them.
 - Per-user writable files (settings, savegames, compiled caches, screenshots) are stored in the **OS-recommended application data path**. With the current build these are under `io.github.wszqkzqk/PvZPortable` and include subfolders such as:
   - `userdata/` — Player save files.
   - `cache64/` if you use the 64-bit version or `cache32/` if you use the 32-bit version — Compiled binary caches (reanimation / compiled definitions). These caches are **local startup** artifacts (**native layout**), not portable files; when cache/schema checks fail, the game transparently recompiles from source data.
@@ -80,7 +80,7 @@ Examples:
 - macOS: `~/Library/Application Support/io.github.wszqkzqk/PvZPortable/`
 
 You can customize these paths via command-line parameters:
-- `-resdir <path>` / `-resdir=<path>`: Set the **resource directory** (where `main.pak` and `properties/` are located). This only affects where the game looks for resources, not where it saves data.
+- `-resdir <path>` / `-resdir=<path>`: Set the **resource directory** (where `main.pak` is located). This only affects where the game looks for resources, not where it saves data.
 - `-savedir <path>` / `-savedir=<path>`: Set the **save data directory** (where settings, savegames, caches, and screenshots are stored). This overrides the default OS-recommended application data path.
 
 ### Special Instructions for Android
@@ -92,8 +92,8 @@ Download the APK from the [Releases](https://github.com/wszqkzqk/PvZ-Portable/re
 1. **Install the APK** (you may need to enable "Install from unknown sources").
 2. **Launch the app** — since no game resources are found, a **resource import screen** will appear automatically.
 3. **Import game resources** by selecting either:
-   - A **ZIP file** containing `main.pak` and `properties/` (either at the ZIP root or inside one wrapper directory, e.g. `PvZ/main.pak`).
-   - A **folder** that directly contains `main.pak` and `properties/`, or whose immediate subfolder does.
+   - A **ZIP file** containing `main.pak` (either at the ZIP root or inside one wrapper directory, e.g. `PvZ/main.pak`).
+   - A **folder** that directly contains `main.pak`, or whose immediate subfolder does.
 4. Press **Start Game** once the import succeeds.
 
 #### Managing Data Later
@@ -113,7 +113,7 @@ Download the unsigned IPA from the [Releases](https://github.com/wszqkzqk/PvZ-Po
 
 #### Importing Game Resources
 
-The app's Documents folder is exposed via iTunes/Finder file sharing and the iOS Files app (`UIFileSharingEnabled`). Place `main.pak` and the `properties/` folder directly into the app's Documents directory (shown as "PvZ Portable" in the Files app).
+The app's Documents folder is exposed via iTunes/Finder file sharing and the iOS Files app (`UIFileSharingEnabled`). Place `main.pak` directly into the app's Documents directory (shown as "PvZ Portable" in the Files app).
 
 #### Notes
 
@@ -123,34 +123,9 @@ The app's Documents folder is exposed via iTunes/Finder file sharing and the iOS
 
 ### Play in Your Browser (WebAssembly)
 
-**[▶ Play Online](https://wszqkzqk.github.io/PvZ-Portable/pvz-portable.html)** — open the link, load your legally purchased game resources either from a ZIP package or from `main.pak` plus the `properties/` folder, then click **Start Game**. All files stay in your browser locally and are **never uploaded to any server** (the hosting site is purely static). Save data is stored in your browser's IndexedDB and can be imported from ZIP or folder, or exported as a ZIP via the on-screen buttons.
+**[▶ Play Online](https://wszqkzqk.github.io/PvZ-Portable/pvz-portable.html)** — open the link, load your legally purchased `main.pak` either from a ZIP package or from a folder, then click **Start Game**. All files stay in your browser locally and are **never uploaded to any server** (the hosting site is purely static). Save data is stored in your browser's IndexedDB and can be imported from ZIP or folder, or exported as a ZIP via the on-screen buttons.
 
 You can also [download the WASM build](https://github.com/wszqkzqk/PvZ-Portable/releases) and self-host it. Note that the HTML file must be served over HTTP (e.g. `python3 -m http.server`) — opening it directly as a local file will not work due to browser security restrictions.
-
-## Game Version Compatibility
-
-This project is designed and tested against Plants vs. Zombies **GOTY Edition 1.2.0.1073** EN (the standalone PopCap release). **Non-English GOTY editions** (1.2.0.1093 DE/ES/FR/IT or 1.1.0.1056 ZH based on 1.2.0.1073) and the **Steam GOTY Edition 1.2.0.1096** are also fully playable — all game mechanics work correctly. The only differences are minor cosmetic UI text issues caused by renamed string keys across versions, and these can be **easily fixed** by the user via a custom `properties/pvz-portable.xml`.
-
-For **1.2.0.1096** and **non-English GOTY editions**, generate compatibility and translation overrides with:
-
-```bash
-python3 scripts/make-compat-overrides.py "/path/to/main.pak"
-```
-
-The script writes `pvz-portable.xml` to the `properties/` directory beside `main.pak`. Use `-o` to choose a different output path or `--force` to overwrite an existing file.
-
-**Recommendation:** use the **1.2.0.1073 EN** asset package for the best **out-of-box** experience.
-
-<details>
-<summary>Known cosmetic differences with non-1.2.0.1073 EN assets (click to expand)</summary>
-
-| Issue (Non-1.2.0.1073 EN only) | Cause |
-| :---: | :---: |
-| **Almanac blue description text missing** | In 1.2.0.1096, the plain-text introductory paragraph was split out from `[XXX_DESCRIPTION]` into a new `[XXX_DESCRIPTION_HEADER]` key. The engine only reads `[XXX_DESCRIPTION]`, so the header text is never displayed. |
-| **"Restart" button label missing** | The key `[RESTART_LEVEL]` (used for the button label) was renamed to `[RESTART_LEVEL_BUTTON]` in 1.2.0.1096. |
-| **Unencountered zombie shows `???`** instead of `(not encountered yet)` | The string `[NOT_ENCOUNTERED_YET]` changed its value to `???` in 1.2.0.1096; the old text was moved to a new key `[NOT_ENCOUNTERED_YET_DESCRIPTION]`. |
-| **Crazy Dave's plant sell price shows 1/10 of the correct value** | In 1.2.0.1073, the string template `[CRAZY_DAVE_1700]` contains a trailing `0` after `{SELL_PRICE}` (i.e. `${SELL_PRICE}0`) because the engine passes the price divided by 10. In 1.2.0.1096 the trailing `0` was removed, so the displayed price becomes 1/10 of the intended amount. |
-</details>
 
 ## Dependencies
 
@@ -328,9 +303,7 @@ When contributing please follow the following guides:
 
 ### From the SexyAppFramework docs:
 
-<br>
 The framework differs from many other APIs in that some class properties are not wrapped in accessor methods, but rather are made to be accessed directly through public member data.   The window caption of your application, for example, is set by assigning a value to the std::string mTitle in the application object before the application’s window is created.  We felt that in many cases this reduced the code required to implement a class.  Also of note is the prefix notation used on variables: “m” denotes a class member, “the” denotes a parameter passed to a method or function, and “a” denotes a local variable.
-</br>
 </details>
 
 ## License

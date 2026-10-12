@@ -83,7 +83,7 @@ body:
       label: Resource Pack Version
       description: >
         Which version of the original PvZ game data are you using?
-        The resource data (main.pak / properties) comes from different releases.
+        The resource data (main.pak) comes from different releases.
       options:
         - "1.2.0.1073 (Origin / PopCap GOTY)"
         - "1.2.0.1096 (Steam GOTY)"

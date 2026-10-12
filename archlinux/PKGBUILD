@@ -50,7 +50,6 @@ build() {
 package() {
     mkdir -p "${pkgdir}/usr/share/pvz-portable"
     install -Dm644 "main.pak" "${pkgdir}/usr/share/pvz-portable/main.pak"
-    cp -r "properties" "${pkgdir}/usr/share/pvz-portable"
 
     install -Dm755 "build/pvz-portable" "${pkgdir}/usr/share/pvz-portable/pvz-portable"
     install -Dm755 "pvz-portable.sh" "${pkgdir}/usr/bin/pvz-portable"

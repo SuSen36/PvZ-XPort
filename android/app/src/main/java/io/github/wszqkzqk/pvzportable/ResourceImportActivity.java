@@ -138,8 +138,7 @@ public class ResourceImportActivity extends AppCompatActivity {
     private boolean hasResources() {
         if (gameDir == null) return false;
         File pak = new File(gameDir, "main.pak");
-        File props = new File(gameDir, "properties");
-        return pak.exists() && props.isDirectory();
+        return pak.exists();
     }
 
     private boolean hasSaveData() {

@@ -168,20 +168,20 @@ canvas#canvas {
     </p>
     <p>Community-driven re-implementation for <strong>all desktop, mobile, and web</strong>. Play instantly in your browser with no installation. <strong>No game resources are included.</strong></p>
     <p>To use this engine, you <strong>MUST</strong> legally purchase the original game on <a href="https://store.steampowered.com/app/3590/Plants_vs_Zombies_GOTY_Edition/" target="_blank" style="color:#4ecca3;text-decoration:underline;">Steam</a> or <a href="https://www.ea.com/games/plants-vs-zombies/plants-vs-zombies" target="_blank" style="color:#4ecca3;text-decoration:underline;">EA's official website</a>.<br>
-    Please provide your own <code>main.pak</code> and <code>properties/</code> folder from your legally purchased copy of Plants&nbsp;vs.&nbsp;Zombies GOTY Edition.</p>
+    Please provide your own <code>main.pak</code> from your legally purchased copy of Plants&nbsp;vs.&nbsp;Zombies GOTY Edition.</p>
     <p style="font-size: 0.85em; color: #888; font-style: italic; line-height: 1.4; max-width: 600px; margin: 0 auto 1.5em auto;">Disclaimer: This strictly educational project is a community-driven engine re-implementation. It is not affiliated with, authorized, or endorsed by PopCap Games or Electronic Arts.</p>
 
     <div id="drop-zone">
         <p id="drop-zone-title">📂 Drop resources here — import and play instantly!</p>
-        <p id="drop-zone-subtitle">Drop a ZIP or folder containing <code>main.pak</code> &amp; <code>properties/</code>, or pick one below:</p>
+        <p id="drop-zone-subtitle">Drop a ZIP or folder containing <code>main.pak</code>, or pick one below:</p>
         <div id="resource-split-actions">
             <button id="browse-zip-btn" class="resource-action" type="button">
                 <strong>Import Resource ZIP</strong>
-                <span>Select a ZIP package that contains <code>main.pak</code> and <code>properties/</code>.</span>
+                <span>Select a ZIP package that contains <code>main.pak</code>.</span>
             </button>
             <button id="browse-folder-btn" class="resource-action" type="button">
                 <strong>Select Resource Folder</strong>
-                <span>Select a folder that directly contains <code>main.pak</code> and <code>properties/</code>.</span>
+                <span>Select a folder that directly contains <code>main.pak</code>.</span>
             </button>
         </div>
         <p id="drop-zone-ready-title">▶ Start Game</p>
@@ -243,7 +243,6 @@ Module.canvas.addEventListener('contextmenu', function(e) {
 
 const collectedFiles = new Map();
 let hasPak = false;
-let hasProperties = false;
 let savesMounted = false;
 let gameStarted = false;
 let saveSyncIntervalId = null;
@@ -375,12 +374,8 @@ async function importResourceZip(file, btn) {
 
 function refreshUI() {
     hasPak = collectedFiles.has('main.pak');
-    hasProperties = false;
-    for (const key of collectedFiles.keys()) {
-        if (key.startsWith('properties/')) { hasProperties = true; break; }
-    }
 
-    const allReady = hasPak && hasProperties;
+    const allReady = hasPak;
     const hasAny = collectedFiles.size > 0;
 
     fileListDiv.innerHTML = '';
@@ -392,7 +387,6 @@ function refreshUI() {
             fileListDiv.appendChild(d);
         };
         show('main.pak', hasPak);
-        show('properties/', hasProperties);
     }
     fileListDiv.classList.toggle('has-items', hasAny);
 

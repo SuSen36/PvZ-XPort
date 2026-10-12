@@ -327,6 +327,7 @@ SexyAppBase::SexyAppBase()
 	mVSyncBrokenTestStartTick = 0;
 	mVSyncBrokenTestUpdates = 0;
 	mWaitForVSync = false;
+	mAutoPause = true;
 	mSoftVSyncWait = true;
 	mUserChanged3DSetting = false;
 	mAutoEnable3D = false;
@@ -1094,6 +1095,7 @@ void SexyAppBase::WriteToRegistry()
 	RegistryWriteInteger("CustomCursors", mCustomCursorsEnabled ? 1 : 0);
 	RegistryWriteInteger("InProgress", 0);
 	RegistryWriteBoolean("WaitForVSync", mWaitForVSync);
+	RegistryWriteBoolean("AutoPause", mAutoPause);
 }
 
 bool SexyAppBase::RegistryEraseKey(const std::string& _theKeyName)
@@ -1355,6 +1357,7 @@ void SexyAppBase::ReadFromRegistry()
 		EnableCustomCursors(anInt != 0);
 
 	RegistryReadBoolean("WaitForVSync", &mWaitForVSync);
+	RegistryReadBoolean("AutoPause", &mAutoPause);
 
 	if (RegistryReadInteger("InProgress", &anInt))
 		mLastShutdownWasGraceful = anInt == 0;
@@ -3025,17 +3028,16 @@ void SexyAppBase::ShowResourceError(bool doExit)
 	// Documents folder is only shown in the Files app / iTunes once it contains a file
 	const std::filesystem::path aResourceDir(GetResourceFolder());
 	const bool aHasGameResources = !aResourceDir.empty() &&
-		std::filesystem::is_regular_file(aResourceDir / "main.pak") &&
-		std::filesystem::is_directory(aResourceDir / "properties");
+		std::filesystem::is_regular_file(aResourceDir / "main.pak");
 	if (!aHasGameResources)
 	{
 		const std::filesystem::path aReadmePath = aResourceDir / "README.txt";
 		if (!aResourceDir.empty() && !std::filesystem::exists(aReadmePath))
 			std::ofstream(aReadmePath, std::ios::out | std::ios::trunc)
-				<< "Place your `main.pak` and `properties/` folder here to play the game.\n";
+				<< "Place your `main.pak` here to play the game.\n";
 	}
 	std::string aMessage =
-		"Please place main.pak and the properties/ folder into the "
+		"Please place main.pak into the "
 		"PvZ Portable folder using the Files app or Finder/iTunes file sharing.";
 	if (!aError.empty())
 		aMessage += "\n\n(" + aError + ")";
@@ -3043,7 +3045,7 @@ void SexyAppBase::ShowResourceError(bool doExit)
 	std::string aMessage;
 	if (!aError.empty())
 		aMessage = aError + "\n\n";
-	aMessage += "Please place main.pak and the properties/ folder into:\n" + GetResourceFolder();
+	aMessage += "Please place main.pak into:\n" + GetResourceFolder();
 #endif
 	Popup(aMessage);
 	if (doExit)
@@ -3365,7 +3367,6 @@ void SexyAppBase::Init()
 	if (mShutdown)
 		return;
 
-	// Set resource directory (for main.pak, properties/, etc.)
 	if (!ChangeDirHook(mResourceDir.c_str()))
 	{
 		SetResourceFolder(mResourceDir);

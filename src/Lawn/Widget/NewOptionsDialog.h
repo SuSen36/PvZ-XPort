@@ -48,7 +48,7 @@ protected:
 		NewOptionsDialog_MusicVolume,
 		NewOptionsDialog_SoundVolume,
 		NewOptionsDialog_Fullscreen,
-		NewOptionsDialog_HardwareAcceleration,
+		NewOptionsDialog_AutoPause,
 	};
 
 public:
@@ -56,7 +56,7 @@ public:
 	std::unique_ptr<Sexy::Slider>		mMusicVolumeSlider;
 	std::unique_ptr<Sexy::Slider>		mSfxVolumeSlider;
 	std::unique_ptr<Sexy::Checkbox>		mFullscreenCheckbox;
-	std::unique_ptr<Sexy::Checkbox>		mHardwareAccelerationCheckbox;
+	std::unique_ptr<Sexy::Checkbox>		mAutoPauseCheckbox;
 	std::unique_ptr<LawnStoneButton>	mAlmanacButton;
 	std::unique_ptr<LawnStoneButton>	mBackToMainButton;
 	std::unique_ptr<LawnStoneButton>	mRestartButton;

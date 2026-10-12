@@ -605,12 +605,12 @@ void AwardScreen::DrawAchievements(Graphics* g) {
 
 	g->DrawImage(IMAGE_CHALLENGE_BACKGROUND, 0, 0);
 
-	PvzpDrawString(g, mApp->GetString("ACHIEVEMENTS_TITLE", "ACHIEVEMENTS"), BOARD_WIDTH / 2, 58, FONT_HOUSEOFTERROR28, Color(220, 220, 220), DS_ALIGN_CENTER);
+	PvzpDrawString(g, mApp->GetString("ACHIEVEMENTS", "ACHIEVEMENTS"), BOARD_WIDTH / 2, 58, FONT_HOUSEOFTERROR28, Color(220, 220, 220), DS_ALIGN_CENTER);
 
 	for (size_t i = 0; i < mAchievementItems.size(); i++) {
-		std::string aAchievementName = std::string(gAchievementList[mAchievementItems[i].mId].name);
-		std::string aAchievementDesc = std::string(gAchievementList[mAchievementItems[i].mId].description);
-		aAchievementName.append(" Earned!");
+		std::string aAchievementName = mApp->GetString(gAchievementList[mAchievementItems[i].mId].name, gAchievementList[mAchievementItems[i].mId].name);
+		std::string aAchievementDesc = mApp->GetString(gAchievementList[mAchievementItems[i].mId].description, gAchievementList[mAchievementItems[i].mId].description);
+		aAchievementName = mApp->GetFormattedString("%s Earned!", "%s Earned!", aAchievementName.c_str());
 
 		Rect aSrcRect = Rect(70 * (mAchievementItems[i].mId % 7), 70 * (mAchievementItems[i].mId / 7), 70, 70);
 		Rect aDestRect = Rect(220, mAchievementItems[i].mY + 10, 70, 70);

@@ -334,9 +334,12 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 	g->DrawImage(Sexy::IMAGE_ALMANAC_PLANTCARD, 459, 86);
 	const PlantDefinition& aPlantDef = GetPlantDefinition(mSelectedSeed);
 	std::string aName = Plant::GetNameString(mSelectedSeed, SEED_NONE);
-	std::string aDescriptionName = std::format("[{}_DESCRIPTION]", aPlantDef.mPlantName);
+	std::string aDescription(PvzpStringTranslate(std::format("[{}_DESCRIPTION]", aPlantDef.mPlantName)));
+	std::string_view aDescriptionHeader = PvzpStringTryTranslate(std::format("[{}_DESCRIPTION_HEADER]", aPlantDef.mPlantName)).value_or(std::string_view());
+	if (!aDescriptionHeader.empty())
+		aDescription = std::string(aDescriptionHeader) + aDescription;
 	PvzpDrawString(g, aName, 617, 288, Sexy::FONT_DWARVENTODCRAFT18YELLOW, Color::White, DS_ALIGN_CENTER);
-	PvzpDrawStringWrapped(g, aDescriptionName, Rect(485, 309, 258, 230), Sexy::FONT_BRIANNETOD12, Color(40, 50, 90), DS_ALIGN_LEFT);
+	PvzpDrawStringWrapped(g, aDescription, Rect(485, 309, 258, 230), Sexy::FONT_BRIANNETOD12, Color(40, 50, 90), DS_ALIGN_LEFT);
 
 	if (mSelectedSeed != SeedType::SEED_IMITATER)
 	{
@@ -467,11 +470,14 @@ void AlmanacDialog::DrawZombies(Graphics* g)
 	if (ZombieHasDescription(mSelectedZombie))
 	{
 		aDescription = PvzpStringTranslate(std::format("[{}_DESCRIPTION]", aZombieDef.mZombieName));
+		std::string_view aDescriptionHeader = PvzpStringTryTranslate(std::format("[{}_DESCRIPTION_HEADER]", aZombieDef.mZombieName)).value_or(std::string_view());
+		if (!aDescriptionHeader.empty())
+			aDescription = std::string(aDescriptionHeader) + aDescription;
 		aAlign = DS_ALIGN_LEFT;
 	}
 	else
 	{
-		aDescription = "[NOT_ENCOUNTERED_YET]";
+		aDescription = "[NOT_ENCOUNTERED_YET_DESCRIPTION]";
 		aAlign = DS_ALIGN_CENTER_VERTICAL_MIDDLE;
 	}
 	for (PvzpStringListFormat& aFormat : gLawnStringFormats)

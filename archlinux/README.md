@@ -32,12 +32,9 @@ sudo pacman -S --needed base-devel
 
 ### Prepare Game Assets
 
-Locate your legally installed copy of Plants vs. Zombies 1.2.0.1073 GOTY (or 1.2.0.1096 GOTY in Steam). If you have not bought the game yet, you can purchase it on [Steam](https://store.steampowered.com/app/3590/Plants_vs_Zombies_Game_of_the_Year_Edition/) or [EA App](https://www.ea.com/games/plants-vs-zombies/plants-vs-zombies-game-of-the-year). You need two items:
-
-> **Note on game version compatibility:** This engine is designed for **1.2.0.1073** (the standalone PopCap release). Using **1.2.0.1096** (Steam GOTY) assets works for general gameplay, but has known issues: the Almanac blue description text will not appear, the "Restart" button label may be missing, unencountered zombies show `???` instead of `(not encountered yet)`, and Crazy Dave's plant sell price displays as 1/10 of the correct value. These are caused by breaking changes in 1.2.0.1096's `LawnStrings.txt` format. **Using 1.2.0.1073 assets is recommended.**
+Locate your legally installed copy of Plants vs. Zombies 1.2.0.1073 GOTY. If you have not bought the game yet, you can purchase it on [Steam](https://store.steampowered.com/app/3590/Plants_vs_Zombies_Game_of_the_Year_Edition/) or [EA App](https://www.ea.com/games/plants-vs-zombies/plants-vs-zombies-game-of-the-year). You need one item:
 
 1.  The file `main.pak`
-2.  The folder `properties/`
 
 **Common Installation Paths:**
 
@@ -52,14 +49,14 @@ Locate your legally installed copy of Plants vs. Zombies 1.2.0.1073 GOTY (or 1.2
 **Note:** If you installed the game via Steam on Linux, it will be in the Linux path listed above. If you are copying files from a Windows partition or an external drive, look for the Windows paths.
 
 **Packaging the Assets:**
-Create a ZIP file named `Plants_vs._Zombies_1.2.0.1073_EN.zip` containing these items at the **root** of the archive.
+Create a ZIP file named `Plants_vs._Zombies_1.2.0.1073_EN.zip` containing this item at the **root** of the archive.
 
 ```bash
 # Example command if you are in the game directory:
-7z a Plants_vs._Zombies_1.2.0.1073_EN.zip main.pak properties/
+7z a Plants_vs._Zombies_1.2.0.1073_EN.zip main.pak
 ```
 
-> **Note:** Do not put them inside a subfolder inside the zip. The `PKGBUILD` expects `main.pak` to be at the top level of the archive.
+> **Note:** Do not put it inside a subfolder inside the zip. The `PKGBUILD` expects `main.pak` to be at the top level of the archive.
 
 ### Build and Install
 

@@ -333,6 +333,7 @@ public:
 	uint32_t				mVSyncBrokenTestStartTick;
 	uint32_t				mVSyncBrokenTestUpdates;
 	bool					mWaitForVSync;
+	bool					mAutoPause;
 	bool					mSoftVSyncWait;
 	bool					mUserChanged3DSetting;
 	bool					mAutoEnable3D;
