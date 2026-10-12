@@ -7,9 +7,8 @@
     <string name="status_missing">Game resources not found.\nPlease import main.pak to continue.</string>
 
     <string name="section_import_resources">Import Game Resources</string>
-    <string name="import_help">Select a ZIP file or a folder that contains legally purchased copy of main.pak.</string>
-    <string name="btn_pick_zip">Select ZIP File</string>
-    <string name="btn_pick_dir">Select Resource Folder</string>
+    <string name="import_help">Select your legally purchased copy of main.pak.</string>
+    <string name="btn_pick_pak">Select main.pak</string>
 
     <string name="section_save_data">Import/Export Save Data (Optional)</string>
     <string name="btn_export_save">Export Save Data</string>

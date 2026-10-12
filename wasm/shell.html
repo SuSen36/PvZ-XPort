@@ -82,7 +82,7 @@ body.game-mode {
 #drop-zone.loading #drop-zone-reselect,
 #drop-zone.loading #file-list { display: none; }
 #resource-split-actions {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 0.9em;
+    display: grid; grid-template-columns: 1fr; gap: 0.9em;
 }
 .resource-action {
     appearance: none; background: rgba(43,43,64,0.85); color: #eee;
@@ -173,15 +173,11 @@ canvas#canvas {
 
     <div id="drop-zone">
         <p id="drop-zone-title">📂 Drop resources here — import and play instantly!</p>
-        <p id="drop-zone-subtitle">Drop a ZIP or folder containing <code>main.pak</code>, or pick one below:</p>
+        <p id="drop-zone-subtitle">Drop <code>main.pak</code> here, or pick it below:</p>
         <div id="resource-split-actions">
-            <button id="browse-zip-btn" class="resource-action" type="button">
-                <strong>Import Resource ZIP</strong>
-                <span>Select a ZIP package that contains <code>main.pak</code>.</span>
-            </button>
-            <button id="browse-folder-btn" class="resource-action" type="button">
-                <strong>Select Resource Folder</strong>
-                <span>Select a folder that directly contains <code>main.pak</code>.</span>
+            <button id="browse-pak-btn" class="resource-action" type="button">
+                <strong>Import main.pak</strong>
+                <span>Select your legally purchased <code>main.pak</code>.</span>
             </button>
         </div>
         <p id="drop-zone-ready-title">▶ Start Game</p>
@@ -189,8 +185,7 @@ canvas#canvas {
         <div id="file-list"></div>
         <p id="drop-zone-reselect"><a id="reselect-link">Re-select resources</a></p>
         <div id="loading-drop-zone"></div>
-        <input type="file" id="file-input" multiple webkitdirectory>
-        <input type="file" id="resource-zip-input" accept=".zip,application/zip,application/x-zip-compressed" style="display:none">
+        <input type="file" id="resource-pak-input" accept=".pak" style="display:none">
     </div>
     <div id="upload-save-actions">
         <button id="upload-save-import-btn" title="Import saves from ZIP before starting">Import Save ZIP</button>
@@ -200,7 +195,7 @@ canvas#canvas {
     <input type="file" id="upload-save-import-input" accept=".zip" style="display:none">
     <input type="file" id="upload-save-import-dir-input" multiple webkitdirectory style="display:none">
 
-    <p class="note">Your files stay in your browser and are never uploaded to any server.<br>Resources can be loaded from a ZIP package or a resource folder. Saves are stored locally in your browser via IndexedDB and can be imported from ZIP or folder.</p>
+    <p class="note">Your files stay in your browser and are never uploaded to any server.<br>Resources are loaded from main.pak. Saves are stored locally in your browser via IndexedDB and can be imported from ZIP or folder.</p>
     <p class="note">Starting the game indicates that you have read the notices above and acknowledge the no-warranty terms of the LGPL v3.0-or-later license for this code.</p>
     <p class="note">Copyright (C) 2026 Zhou Qiankang &lt;<a href="mailto:wszqkzqk@qq.com" style="color:#4ecca3;text-decoration:underline;">wszqkzqk@qq.com</a>&gt;</p>
 </div>
@@ -255,10 +250,8 @@ const SAVE_SYNC_INTERVAL_MS = 5000;
 const SAVE_CLOSE_WARNING_MS = 7000;
 
 const dropZone    = document.getElementById('drop-zone');
-const fileInput   = document.getElementById('file-input');
-const browseFolderBtn = document.getElementById('browse-folder-btn');
-const browseZipBtn = document.getElementById('browse-zip-btn');
-const resourceZipInput = document.getElementById('resource-zip-input');
+const browsePakBtn = document.getElementById('browse-pak-btn');
+const resourcePakInput = document.getElementById('resource-pak-input');
 const fileListDiv = document.getElementById('file-list');
 const loadStatus  = document.getElementById('loading-drop-zone');
 const uploadSaveImportBtn = document.getElementById('upload-save-import-btn');
@@ -272,45 +265,21 @@ let runtimeReloadScheduled = false;
 
 dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('dragover'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', async e => {
+dropZone.addEventListener('drop', e => {
     e.preventDefault();
     dropZone.classList.remove('dragover');
-    const items = e.dataTransfer.items;
-    if (!items) return;
-    const entries = [];
-    for (const item of items) {
-        const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
-        if (entry) entries.push(entry);
-    }
-    for (const entry of entries) {
-        if (entry.isFile && entry.name && entry.name.toLowerCase().endsWith('.zip')) {
-            const file = await new Promise(r => entry.file(r));
-            await importResourceZip(file, browseZipBtn);
-            continue;
-        }
-        await traverseEntry(entry, '');
-    }
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    collectedFiles.set('main.pak', files[0]);
     refreshUI();
 });
-browseFolderBtn.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', () => { handleFileList(fileInput.files); refreshUI(); });
-browseZipBtn.addEventListener('click', () => resourceZipInput.click());
-resourceZipInput.addEventListener('change', async () => {
-    const file = resourceZipInput.files && resourceZipInput.files[0];
-    if (!file) return;
-    await importResourceZip(file, browseZipBtn);
-    resourceZipInput.value = '';
+browsePakBtn.addEventListener('click', () => resourcePakInput.click());
+resourcePakInput.addEventListener('change', () => {
+    const file = resourcePakInput.files && resourcePakInput.files[0];
+    if (file) collectedFiles.set('main.pak', file);
+    resourcePakInput.value = '';
     refreshUI();
 });
-
-function normalizeResourcePath(path) {
-    const cleanPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
-    const parts = cleanPath.split('/').filter(Boolean);
-    if (parts.length === 0) return '';
-    if (parts[0] === 'main.pak' || parts[0] === 'properties') return parts.join('/');
-    if (parts.length > 1) return parts.slice(1).join('/');
-    return parts[0];
-}
 
 function normalizeSaveImportPath(path) {
     const cleanPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
@@ -321,55 +290,6 @@ function normalizeSaveImportPath(path) {
     if (userdataIndex >= 0) return parts.slice(userdataIndex + 1).join('/');
     if (parts.length > 1) return parts.slice(1).join('/');
     return parts[0];
-}
-
-async function traverseEntry(entry, basePath) {
-    if (entry.isFile) {
-        const file = await new Promise(r => entry.file(r));
-        const rawPath = basePath ? basePath + '/' + entry.name : entry.name;
-        const path = normalizeResourcePath(rawPath);
-        if (!path) return;
-        collectedFiles.set(path, file);
-    } else if (entry.isDirectory) {
-        const dirPath = basePath ? basePath + '/' + entry.name : entry.name;
-        const reader = entry.createReader();
-        let batch;
-        do {
-            batch = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
-            for (const child of batch) await traverseEntry(child, dirPath);
-        } while (batch.length > 0);
-    }
-}
-
-function handleFileList(files) {
-    for (const f of files) {
-        const path = normalizeResourcePath(f.webkitRelativePath || f.name);
-        if (!path) continue;
-        collectedFiles.set(path, f);
-    }
-}
-
-async function importResourceZip(file, btn) {
-    btn.disabled = true;
-    const oldHTML = btn.innerHTML;
-    btn.textContent = '⏳ Importing ZIP…';
-    try {
-        const zip = await JSZip.loadAsync(file);
-        const entries = Object.keys(zip.files).filter(name => !zip.files[name].dir);
-
-        for (const name of entries) {
-            const destPath = normalizeResourcePath(name);
-            if (!destPath) continue;
-            const data = await zip.files[name].async('uint8array');
-            collectedFiles.set(destPath, new File([data], destPath.split('/').pop()));
-        }
-    } catch (e) {
-        console.error('Resource ZIP import failed:', e);
-        alert('Resource ZIP import failed: ' + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = oldHTML;
-    }
 }
 
 function refreshUI() {
@@ -417,8 +337,7 @@ dropZone.addEventListener('keydown', e => {
 reselectLink.addEventListener('click', e => {
     e.stopPropagation();
     collectedFiles.clear();
-    fileInput.value = '';
-    resourceZipInput.value = '';
+    resourcePakInput.value = '';
     refreshUI();
 });
 
@@ -765,8 +684,7 @@ window.onGameExit = function() {
     dropZone.style.pointerEvents = '';
     loadStatus.style.display = 'none';
     collectedFiles.clear();
-    fileInput.value = '';
-    resourceZipInput.value = '';
+    resourcePakInput.value = '';
     refreshUI();
 
     if (runtimeReloadScheduled) return;

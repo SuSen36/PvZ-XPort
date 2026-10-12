@@ -91,9 +91,7 @@ Download the APK from the [Releases](https://github.com/wszqkzqk/PvZ-Portable/re
 
 1. **Install the APK** (you may need to enable "Install from unknown sources").
 2. **Launch the app** — since no game resources are found, a **resource import screen** will appear automatically.
-3. **Import game resources** by selecting either:
-   - A **ZIP file** containing `main.pak` (either at the ZIP root or inside one wrapper directory, e.g. `PvZ/main.pak`).
-   - A **folder** that directly contains `main.pak`, or whose immediate subfolder does.
+3. **Import game resources** by selecting your legally purchased `main.pak` file.
 4. Press **Start Game** once the import succeeds.
 
 #### Managing Data Later
@@ -123,7 +121,7 @@ The app's Documents folder is exposed via iTunes/Finder file sharing and the iOS
 
 ### Play in Your Browser (WebAssembly)
 
-**[▶ Play Online](https://wszqkzqk.github.io/PvZ-Portable/pvz-portable.html)** — open the link, load your legally purchased `main.pak` either from a ZIP package or from a folder, then click **Start Game**. All files stay in your browser locally and are **never uploaded to any server** (the hosting site is purely static). Save data is stored in your browser's IndexedDB and can be imported from ZIP or folder, or exported as a ZIP via the on-screen buttons.
+**[▶ Play Online](https://wszqkzqk.github.io/PvZ-Portable/pvz-portable.html)** — open the link, load your legally purchased `main.pak`, then click **Start Game**. All files stay in your browser locally and are **never uploaded to any server** (the hosting site is purely static). Save data is stored in your browser's IndexedDB and can be imported from ZIP or folder, or exported as a ZIP via the on-screen buttons.
 
 You can also [download the WASM build](https://github.com/wszqkzqk/PvZ-Portable/releases) and self-host it. Note that the HTML file must be served over HTTP (e.g. `python3 -m http.server`) — opening it directly as a local file will not work due to browser security restrictions.
 

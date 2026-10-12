@@ -60,21 +60,15 @@ public class ResourceImportActivity extends AppCompatActivity {
     private File gameDir;
     private TextView statusText;
     private ProgressBar progressBar;
-    private Button btnPickZip;
-    private Button btnPickDir;
+    private Button btnPickPak;
     private Button btnExportSave;
     private Button btnImportSaveZip;
     private Button btnImportSaveDir;
     private Button btnLaunchGame;
 
-    private final ActivityResultLauncher<String[]> zipPicker =
+    private final ActivityResultLauncher<String[]> pakPicker =
         registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
-            if (uri != null) importFromZip(uri);
-        });
-
-    private final ActivityResultLauncher<Uri> dirPicker =
-        registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
-            if (uri != null) importFromDirectory(uri);
+            if (uri != null) importPak(uri);
         });
 
     private final ActivityResultLauncher<String> saveExporter =
@@ -108,18 +102,14 @@ public class ResourceImportActivity extends AppCompatActivity {
 
         statusText    = findViewById(R.id.status_text);
         progressBar   = findViewById(R.id.progress_bar);
-        btnPickZip    = findViewById(R.id.btn_pick_zip);
-        btnPickDir    = findViewById(R.id.btn_pick_dir);
+        btnPickPak    = findViewById(R.id.btn_pick_pak);
         btnExportSave = findViewById(R.id.btn_export_save);
         btnImportSaveZip = findViewById(R.id.btn_import_save_zip);
         btnImportSaveDir = findViewById(R.id.btn_import_save_dir);
         btnLaunchGame = findViewById(R.id.btn_launch_game);
 
-        btnPickZip.setOnClickListener(v ->
-            zipPicker.launch(new String[]{"application/zip", "application/x-zip-compressed"})
-        );
-        btnPickDir.setOnClickListener(v ->
-            dirPicker.launch(null)
+        btnPickPak.setOnClickListener(v ->
+            pakPicker.launch(new String[]{"*/*"})
         );
         btnExportSave.setOnClickListener(v ->
             saveExporter.launch("pvz-portable-savedata.zip")
@@ -166,102 +156,22 @@ public class ResourceImportActivity extends AppCompatActivity {
         finish();
     }
 
-    private void importFromZip(Uri uri) {
+    private void importPak(Uri uri) {
         setWorking(true);
         new Thread(() -> {
             try (InputStream is = getContentResolver().openInputStream(uri);
-                 ZipInputStream zis = new ZipInputStream(is)) {
-                ZipEntry entry;
-                while ((entry = zis.getNextEntry()) != null) {
-                    if (entry.isDirectory()) {
-                        zis.closeEntry();
-                        continue;
-                    }
-                    String name = stripCommonPrefix(entry.getName());
-                    if (name == null) { zis.closeEntry(); continue; }
-
-                    File outFile = new File(gameDir, name);
-                    File parent = outFile.getParentFile();
-                    if (parent != null && !parent.exists()) parent.mkdirs();
-
-                    try (OutputStream os = new BufferedOutputStream(new FileOutputStream(outFile), BUFFER_SIZE)) {
-                        byte[] buf = new byte[BUFFER_SIZE];
-                        int len;
-                        while ((len = zis.read(buf)) > 0) os.write(buf, 0, len);
-                    }
-                    zis.closeEntry();
-                }
+                 OutputStream os = new BufferedOutputStream(
+                         new FileOutputStream(new File(gameDir, "main.pak")), BUFFER_SIZE)) {
+                if (is == null) throw new IOException("Cannot open selected file");
+                byte[] buf = new byte[BUFFER_SIZE];
+                int len;
+                while ((len = is.read(buf)) > 0) os.write(buf, 0, len);
                 runOnUiThread(() -> {
                     Toast.makeText(this, R.string.import_success, Toast.LENGTH_SHORT).show();
                     refreshStatus();
                 });
             } catch (IOException e) {
-                Log.e(TAG, "ZIP import failed", e);
-                runOnUiThread(() -> {
-                    Toast.makeText(this, getString(R.string.import_failed, e.getMessage()), Toast.LENGTH_LONG).show();
-                    refreshStatus();
-                });
-            } finally {
-                runOnUiThread(() -> setWorking(false));
-            }
-        }).start();
-    }
-
-    /**
-     * Strips a single wrapper directory from zip entry paths when the entry
-     * doesn't start with a known top-level name (e.g. "PvZ/main.pak" -> "main.pak").
-     */
-    private String stripCommonPrefix(String name) {
-        name = name.replace('\\', '/').replaceAll("^/+", "");
-
-        if (isKnownTopLevel(name)) return name;
-
-        // Strip one leading directory component
-        int slash = name.indexOf('/');
-        if (slash > 0 && slash < name.length() - 1) {
-            return name.substring(slash + 1);
-        }
-
-        return name;
-    }
-
-    private static boolean isKnownTopLevel(String name) {
-        return name.startsWith("main.pak") || name.startsWith("properties/") ||
-               name.startsWith("Properties/") || name.startsWith("data/") ||
-               name.startsWith("images/") || name.startsWith("particles/") ||
-               name.startsWith("reanim/") || name.startsWith("sounds/") ||
-               name.startsWith("compiled/");
-    }
-
-    private void importFromDirectory(Uri treeUri) {
-        setWorking(true);
-        new Thread(() -> {
-            try {
-                DocumentFile root = DocumentFile.fromTreeUri(this, treeUri);
-                if (root == null) throw new IOException("Cannot open directory");
-
-                // If main.pak isn't here, check one level of subdirectories
-                DocumentFile sourceDir = root;
-                if (root.findFile("main.pak") == null) {
-                    for (DocumentFile child : root.listFiles()) {
-                        if (child.isDirectory()) {
-                            DocumentFile nested = child.findFile("main.pak");
-                            if (nested != null) {
-                                sourceDir = child;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                copyDocumentTree(sourceDir, gameDir);
-
-                runOnUiThread(() -> {
-                    Toast.makeText(this, R.string.import_success, Toast.LENGTH_SHORT).show();
-                    refreshStatus();
-                });
-            } catch (IOException e) {
-                Log.e(TAG, "Directory import failed", e);
+                Log.e(TAG, "PAK import failed", e);
                 runOnUiThread(() -> {
                     Toast.makeText(this, getString(R.string.import_failed, e.getMessage()), Toast.LENGTH_LONG).show();
                     refreshStatus();
@@ -413,8 +323,7 @@ public class ResourceImportActivity extends AppCompatActivity {
 
     private void setWorking(boolean working) {
         progressBar.setVisibility(working ? View.VISIBLE : View.GONE);
-        btnPickZip.setEnabled(!working);
-        btnPickDir.setEnabled(!working);
+        btnPickPak.setEnabled(!working);
         btnExportSave.setEnabled(!working && hasSaveData());
         btnImportSaveZip.setEnabled(!working);
         btnImportSaveDir.setEnabled(!working);

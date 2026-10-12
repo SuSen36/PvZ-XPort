@@ -1109,7 +1109,6 @@ bool Sexy::ExtractDelayLoad_ZombiquariumResources(ResourceManager* theManager)
 
 // Init Resources
 Image* Sexy::IMAGE_BLANK;
-Image* Sexy::IMAGE_PARTNER_LOGO;
 Image* Sexy::IMAGE_POPCAP_LOGO;
 
 bool Sexy::ExtractInitResources(ResourceManager* theManager)
@@ -1120,7 +1119,6 @@ bool Sexy::ExtractInitResources(ResourceManager* theManager)
 	try
 	{
 		IMAGE_BLANK = aMgr.GetImageThrow("IMAGE_BLANK");
-		IMAGE_PARTNER_LOGO = aMgr.GetImageThrow("IMAGE_PARTNER_LOGO");
 		IMAGE_POPCAP_LOGO = aMgr.GetImageThrow("IMAGE_POPCAP_LOGO");
 	}
 	catch (ResourceManagerException&)
@@ -2322,7 +2320,6 @@ void* gResources[static_cast<int>(Sexy::ResourceId::RESOURCE_ID_MAX)] =
 {
 	&Sexy::IMAGE_BLANK,
 	&Sexy::IMAGE_POPCAP_LOGO,
-	&Sexy::IMAGE_PARTNER_LOGO,
 	&Sexy::IMAGE_TITLESCREEN,
 	&Sexy::IMAGE_LOADBAR_DIRT,
 	&Sexy::IMAGE_LOADBAR_GRASS,

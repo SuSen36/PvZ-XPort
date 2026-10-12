@@ -52,7 +52,6 @@ TitleScreen::TitleScreen(LawnApp* theApp)
 	mDrawnYet = false;
 	mNeedToInit = true;
 	mQuickLoadKey = KeyCode::KEYCODE_UNKNOWN;
-	mDisplayPartnerLogo = mApp->GetBoolean("DisplayPartnerLogo", false);
 	mTitleState = TitleState::TITLESTATE_WAITING_FOR_FIRST_DRAW;
 	mTitleStateDuration = 0;
 	mTitleStateCounter = 0;
@@ -108,10 +107,7 @@ void TitleScreen::Draw(Graphics* g)
 		int anAlpha = 255;
 		if (mTitleStateCounter < mTitleStateDuration - 50)
 		{
-			if (!mDisplayPartnerLogo)
-			{
-				anAlpha = PvzpAnimateCurve(50, 0, mTitleStateCounter, 255, 0, PvzpCurves::CURVE_LINEAR);
-			}
+			anAlpha = PvzpAnimateCurve(50, 0, mTitleStateCounter, 255, 0, PvzpCurves::CURVE_LINEAR);
 		}
 		else
 		{
@@ -120,30 +116,6 @@ void TitleScreen::Draw(Graphics* g)
 		g->SetColorizeImages(true);
 		g->SetColor(Color(255, 255, 255, anAlpha));
 		g->DrawImage(IMAGE_POPCAP_LOGO, (mWidth - IMAGE_POPCAP_LOGO->mWidth) / 2, (mHeight - IMAGE_POPCAP_LOGO->mHeight) / 2);
-		g->SetColorizeImages(false);
-
-		return;
-	}
-
-	if (mTitleState == TitleState::TITLESTATE_PARTNER_LOGO)
-	{
-		g->SetColor(Color::Black);
-		g->FillRect(0, 0, mWidth, mHeight);
-
-		g->SetColorizeImages(true);
-		int anAlpha = 255;
-		if (mTitleStateCounter >= mTitleStateDuration - 35)
-		{
-			anAlpha = PvzpAnimateCurve(mTitleStateDuration, mTitleStateDuration - 35, mTitleStateCounter, 0, 255, PvzpCurves::CURVE_LINEAR);
-			g->SetColor(Color(255, 255, 255, 255 - anAlpha));
-			g->DrawImage(IMAGE_POPCAP_LOGO, (mWidth - IMAGE_POPCAP_LOGO->mWidth) / 2, (mHeight - IMAGE_POPCAP_LOGO->mHeight) / 2);
-		}
-		else
-		{
-			anAlpha = PvzpAnimateCurve(35, 0, mTitleStateCounter, 255, 0, PvzpCurves::CURVE_LINEAR);
-		}
-		g->SetColor(Color(255, 255, 255, anAlpha));
-		g->DrawImage(IMAGE_PARTNER_LOGO, (mWidth - IMAGE_PARTNER_LOGO->mWidth) / 2, (mHeight - IMAGE_PARTNER_LOGO->mHeight) / 2);
 		g->SetColorizeImages(false);
 
 		return;
@@ -229,14 +201,7 @@ void TitleScreen::Update()
 		mApp->StartLoadingThread();
 
 		mTitleState = TitleState::TITLESTATE_POPCAP_LOGO;
-		if (mDisplayPartnerLogo)
-		{
-			mTitleStateDuration = 150;
-		}
-		else
-		{
-			mTitleStateDuration = 200;
-		}
+		mTitleStateDuration = 200;
 
 		mTitleStateCounter = mTitleStateDuration;
 	}
@@ -255,26 +220,6 @@ void TitleScreen::Update()
 	}
 
 	if (mTitleState == TitleState::TITLESTATE_POPCAP_LOGO)
-	{
-		if (mTitleStateCounter == 0)
-		{
-			if (mDisplayPartnerLogo)
-			{
-				mTitleState = TitleState::TITLESTATE_SCREEN;
-				mTitleStateDuration = 200;
-				mTitleStateCounter = 200;
-			}
-			else
-			{
-				mTitleState = TitleState::TITLESTATE_SCREEN;
-				mTitleStateDuration = 100;
-				mTitleStateCounter = 100;
-			}
-		}
-
-		return;
-	}
-	else if (mTitleState == TitleState::TITLESTATE_PARTNER_LOGO)
 	{
 		if (mTitleStateCounter == 0)
 		{

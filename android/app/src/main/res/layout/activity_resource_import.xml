@@ -57,17 +57,10 @@
             android:layout_marginBottom="12dp" />
 
         <Button
-            android:id="@+id/btn_pick_zip"
+            android:id="@+id/btn_pick_pak"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_pick_zip"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/btn_pick_dir"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_pick_dir"
+            android:text="@string/btn_pick_pak"
             android:layout_marginBottom="24dp" />
 
         <!-- Save data section -->
