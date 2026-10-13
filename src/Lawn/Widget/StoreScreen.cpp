@@ -401,7 +401,7 @@ void StoreScreen::DrawItemIcon(Graphics* g, int theItemPosition, StoreItem theIt
 	}
 	else
 	{
-		DrawSeedPacket(g, aPosX, aPosY, (SeedType)(theItemType + 40), SEED_NONE, 0, 255, false, false);
+		DrawSeedPacket(g, aPosX, aPosY, (SeedType)(theItemType + 40), SEED_NONE, 0, 255, false);
 	}
 
 	g->SetDrawMode(Graphics::DRAWMODE_NORMAL);

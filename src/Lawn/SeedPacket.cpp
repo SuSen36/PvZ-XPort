@@ -283,7 +283,7 @@ void SeedPacketDrawSeed(Graphics* g, float x, float y, SeedType theSeedType, See
 	}
 }
 
-void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost, bool theUseCurrentCost)
+void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost)
 {
 	SeedType aSeedType = theSeedType;
 	if (aSeedType == SeedType::SEED_IMITATER && theImitaterType != SeedType::SEED_NONE)
@@ -453,15 +453,10 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 	case SeedType::SEED_ZOMBIE_NORMAL:
 	case SeedType::SEED_ZOMBIE_TRAFFIC_CONE:
 	case SeedType::SEED_ZOMBIE_PAIL:
+	case SeedType::SEED_ZOMBIE_DANCER:
 		aScale = 0.35f;
 		aOffsetX = -3.0f;
 		aOffsetY = -7.0f;
-		break;
-
-	case SeedType::SEED_ZOMBIE_DANCER:
-		aScale = 0.375f;
-		aOffsetX = -19.0f;
-		aOffsetY = -40.0f;
 		break;
 
 	case SeedType::SEED_ZOMBIE_POLEVAULTER:
@@ -563,22 +558,7 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 
 	if (theDrawCost)
 	{
-		std::string aCostStr;
-		if (gLawnApp->mBoard && gLawnApp->mBoard->PlantUsesAcceleratedPricing(aSeedType))
-		{
-			if (theUseCurrentCost)
-			{
-				aCostStr = std::to_string(gLawnApp->mBoard->GetCurrentPlantCost(theSeedType, theImitaterType));
-			}
-			else
-			{
-				aCostStr = std::format("{}+", Plant::GetCost(theSeedType, theImitaterType));
-			}
-		}
-		else
-		{
-			aCostStr = std::to_string(Plant::GetCost(theSeedType, theImitaterType));
-		}
+		std::string aCostStr = std::to_string(Plant::GetCost(theSeedType, theImitaterType));
 
 		_Font* aTextFont = Sexy::FONT_PICO129;
 		int aTextOffsetX = 32 - aTextFont->StringWidth(aCostStr);
@@ -625,8 +605,8 @@ void SeedPacket::Draw(Graphics* g)
 		Graphics aClipG(*g);
 		aClipG.ClipRect(0, 0, mWidth, mHeight);
 
-		DrawSeedPacket(&aClipG, 0.0f, aOffsetY, mPacketType, SeedType::SEED_NONE, 0.0f, 128, false, false);
-		DrawSeedPacket(&aClipG, 0.0f, mHeight + aOffsetY, mSlotMachiningNextSeed, SeedType::SEED_NONE, 0.0f, 128, false, false);
+		DrawSeedPacket(&aClipG, 0.0f, aOffsetY, mPacketType, SeedType::SEED_NONE, 0.0f, 128, false);
+		DrawSeedPacket(&aClipG, 0.0f, mHeight + aOffsetY, mSlotMachiningNextSeed, SeedType::SEED_NONE, 0.0f, 128, false);
 	}
 	else
 	{
@@ -679,7 +659,7 @@ void SeedPacket::Draw(Graphics* g)
 			aGrayness = 128;
 		}
 
-		DrawSeedPacket(g, mOffsetX, 0.0f, mPacketType, mImitaterType, aPercentDark, aGrayness, aDrawCost, true);
+		DrawSeedPacket(g, mOffsetX, 0.0f, mPacketType, mImitaterType, aPercentDark, aGrayness, aDrawCost);
 	}
 }
 

@@ -323,6 +323,7 @@ public:
 	bool							MouseHitTest(int x, int y, HitResult* theHitResult);
 	void							MouseDownWithPlant(int x, int y, int theClickCount);
 	void							MouseDownWithTool(int x, int y, int theClickCount, CursorType theCursorType);
+	bool							MouseDownWithCoin(int x, int y, HitResult* theHitResult, int theClickCount);
 //	inline void						MouseDownNormal(int x, int y, int theClickCount) { /* not found */; }
 	bool							CanInteractWithBoardButtons();
 	void							DrawProgressMeter(Graphics* g);
@@ -475,7 +476,6 @@ public:
 	bool					IsLastStandFinalStage();
 	int					GetNumWavesPerFlag();
 	int								GetCurrentPlantCost(SeedType theSeedType, SeedType theImitaterType);
-	bool					PlantUsesAcceleratedPricing(SeedType theSeedType);
 	void							FreezeEffectsForCutscene(bool theFreeze);
 	void							LoadBackgroundImages();
 	bool							CanUseGameObject(GameObjectType theGameObject);

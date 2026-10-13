@@ -329,7 +329,7 @@ void GridItem::DrawScaryPot(Graphics* g)
 		{
 			aInsideGraphics.mScaleX = 0.7f;
 			aInsideGraphics.mScaleY = 0.7f;
-			DrawSeedPacket(&aInsideGraphics, aXPos + 23.0f, aYPos + 33.0f, mSeedType, SeedType::SEED_NONE, 0.0f, 255, false, false);
+			DrawSeedPacket(&aInsideGraphics, aXPos + 23.0f, aYPos + 33.0f, mSeedType, SeedType::SEED_NONE, 0.0f, 255, false);
 		}
 		else if (mScaryPotType == ScaryPotType::SCARYPOT_ZOMBIE)
 		{

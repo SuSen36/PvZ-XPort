@@ -283,7 +283,7 @@ void AwardScreen::DrawAwardSeed(Graphics* g)
 	DrawBottom(g, "[NEW_PLANT]", aAward, aMessage);
 
 	g->SetScale(2, 2, 350, 129);
-	DrawSeedPacket(g, 350, 129, aSeedType, SEED_NONE, 0, 255, true, false);
+	DrawSeedPacket(g, 350, 129, aSeedType, SEED_NONE, 0, 255, true);
 	g->SetScale(1, 1, 0, 0);
 }
 

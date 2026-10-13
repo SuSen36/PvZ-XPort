@@ -87,7 +87,7 @@ constinit const PlantDefinition gPlantDefs[SeedType::NUM_SEED_TYPES] = {
 	{ .mSeedType = SeedType::SEED_MARIGOLD,          .mPlantImage = nullptr, .mReanimationType = ReanimationType::REANIM_MARIGOLD,      .mPacketIndex = 24, .mSeedCost = 50,  .mRefreshTime = 3000,   .mSubClass = PlantSubClass::SUBCLASS_NORMAL,  .mLaunchRate = 2500, .mPlantName = "MARIGOLD" },
 	{ .mSeedType = SeedType::SEED_MELONPULT,         .mPlantImage = nullptr, .mReanimationType = ReanimationType::REANIM_MELONPULT,     .mPacketIndex = 14, .mSeedCost = 300, .mRefreshTime = 750,    .mSubClass = PlantSubClass::SUBCLASS_SHOOTER, .mLaunchRate = 300,  .mPlantName = "MELON_PULT" },
 	{ .mSeedType = SeedType::SEED_GATLINGPEA,        .mPlantImage = nullptr, .mReanimationType = ReanimationType::REANIM_GATLINGPEA,    .mPacketIndex = 5,  .mSeedCost = 250, .mRefreshTime = 5000,   .mSubClass = PlantSubClass::SUBCLASS_SHOOTER, .mLaunchRate = 150,  .mPlantName = "GATLING_PEA" },
-	{ .mSeedType = SeedType::SEED_TWINSUNFLOWER,     .mPlantImage = nullptr, .mReanimationType = ReanimationType::REANIM_TWIN_SUNFLOWER,.mPacketIndex = 1,  .mSeedCost = 150, .mRefreshTime = 5000,   .mSubClass = PlantSubClass::SUBCLASS_NORMAL,  .mLaunchRate = 2500, .mPlantName = "TWIN_SUNFLOWER" },
+	{ .mSeedType = SeedType::SEED_TWINSUNFLOWER,     .mPlantImage = nullptr, .mReanimationType = ReanimationType::REANIM_TWIN_SUNFLOWER,.mPacketIndex = 1,  .mSeedCost = 125, .mRefreshTime = 3000,   .mSubClass = PlantSubClass::SUBCLASS_NORMAL,  .mLaunchRate = 2500, .mPlantName = "TWIN_SUNFLOWER" },
 	{ .mSeedType = SeedType::SEED_GLOOMSHROOM,       .mPlantImage = nullptr, .mReanimationType = ReanimationType::REANIM_GLOOMSHROOM,   .mPacketIndex = 27, .mSeedCost = 150, .mRefreshTime = 5000,   .mSubClass = PlantSubClass::SUBCLASS_SHOOTER, .mLaunchRate = 200,  .mPlantName = "GLOOM_SHROOM" },
 	{ .mSeedType = SeedType::SEED_CATTAIL,           .mPlantImage = nullptr, .mReanimationType = ReanimationType::REANIM_CATTAIL,       .mPacketIndex = 27, .mSeedCost = 225, .mRefreshTime = 5000,   .mSubClass = PlantSubClass::SUBCLASS_SHOOTER, .mLaunchRate = 150,  .mPlantName = "CATTAIL" },
 	{ .mSeedType = SeedType::SEED_WINTERMELON,       .mPlantImage = nullptr, .mReanimationType = ReanimationType::REANIM_WINTER_MELON,  .mPacketIndex = 27, .mSeedCost = 200, .mRefreshTime = 5000,   .mSubClass = PlantSubClass::SUBCLASS_SHOOTER, .mLaunchRate = 300,  .mPlantName = "WINTER_MELON" },
@@ -4136,13 +4136,6 @@ void Plant::DrawSeedType(Graphics* g, SeedType theSeedType, SeedType theImitater
 	if (Challenge::IsZombieSeedType(aSeedType))
 	{
 		ZombieType aZombieType = Challenge::IZombieSeedTypeToZombieType(aSeedType);
-		if (aZombieType == ZombieType::ZOMBIE_DANCER)
-		{
-			aSeedG.mScaleX *= 0.8f;
-			aSeedG.mScaleY *= 0.8f;
-			aOffsetX = 20.0f;
-			aOffsetY = 42.0f;
-		}
 		gLawnApp->mReanimatorCache->DrawCachedZombie(&aSeedG, thePosX + aOffsetX, thePosY + aOffsetY, aZombieType);
 	}
 	else

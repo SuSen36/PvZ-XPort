@@ -61,6 +61,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/btn_pick_pak"
+            android:textAllCaps="false"
             android:layout_marginBottom="24dp" />
 
         <!-- Save data section -->

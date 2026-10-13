@@ -3010,6 +3010,11 @@ void Board::MouseDrag(int x, int y)
 {
 	Widget::MouseDrag(x, y);
 	mChallenge->MouseMove(x, y);
+
+	HitResult aHitResult;
+	MouseHitTest(x, y, &aHitResult);
+	if (aHitResult.mObjectType == GameObjectType::OBJECT_TYPE_COIN && static_cast<Coin*>(aHitResult.mObject)->IsSun())
+		MouseDownWithCoin(x, y, &aHitResult, 1);
 }
 
 Zombie* Board::ZombieHitTest(int theMouseX, int theMouseY)
@@ -4023,6 +4028,20 @@ void Board::MouseDownWithTool(int x, int y, int theClickCount, CursorType theCur
 	ClearCursor();
 }
 
+bool Board::MouseDownWithCoin(int x, int y, HitResult* theHitResult, int theClickCount)
+{
+	if (theHitResult->mObjectType != GameObjectType::OBJECT_TYPE_COIN || theClickCount < 0)
+		return false;
+
+	Coin* aCoin = (Coin*)theHitResult->mObject;
+	if (aCoin->mBoard)
+	{
+		aCoin->MouseDown(x, y, theClickCount);
+	}
+	UpdateCursor();
+	return true;
+}
+
 Plant* Board::SpecialPlantHitTest(int x, int y)
 {
 	for (Plant* aPlant : mPlants)
@@ -4422,14 +4441,8 @@ void Board::MouseDown(int x, int y, int theClickCount)
 			return;
 		}
 	}
-	else if (aHitResult.mObjectType == GameObjectType::OBJECT_TYPE_COIN && theClickCount >= 0)
+	else if (MouseDownWithCoin(x, y, &aHitResult, theClickCount))
 	{
-		Coin* aCoin = (Coin*)aHitResult.mObject;
-		if (aCoin->mBoard)
-		{
-			aCoin->MouseDown(x, y, theClickCount);
-		}
-		UpdateCursor();
 		return;
 	}
 
@@ -9368,19 +9381,9 @@ void Board::RemoveParticleByType(ParticleEffect theEffectType)
 	}
 }
 
-bool Board::PlantUsesAcceleratedPricing(SeedType theSeedType)
-{
-	return Plant::IsUpgrade(theSeedType) && mApp->IsSurvivalEndless(mApp->mGameMode);
-}
-
 int Board::GetCurrentPlantCost(SeedType theSeedType, SeedType theImitaterType)
 {
-	int aCost = Plant::GetCost(theSeedType, theImitaterType);
-	if (PlantUsesAcceleratedPricing(theSeedType))
-	{
-		aCost += CountPlantByType(theSeedType) * 50;
-	}
-	return aCost;
+	return Plant::GetCost(theSeedType, theImitaterType);
 }
 
 bool Board::CanUseGameObject(GameObjectType theGameObject)

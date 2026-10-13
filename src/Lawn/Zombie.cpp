@@ -646,7 +646,6 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
 	}
 
 	case ZombieType::ZOMBIE_DANCER:
-		mScaleZombie = 0.8f;
 		if (!IsOnBoard())
 		{
 			PlayZombieReanim("anim_armraise", ReanimLoopType::REANIM_LOOP, 0, 12.0f);
@@ -663,7 +662,6 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
 		break;
 
 	case ZombieType::ZOMBIE_BACKUP_DANCER:
-		mScaleZombie = 0.8f;
 		if (!IsOnBoard())
 		{
 			PlayZombieReanim("anim_armraise", ReanimLoopType::REANIM_LOOP, 0, 12.0f);
@@ -8779,10 +8777,6 @@ void Zombie::ApplyBurn()
 		}
 
 		float aCharredScale = mScaleZombie;
-		if (mZombieType == ZombieType::ZOMBIE_DANCER || mZombieType == ZombieType::ZOMBIE_BACKUP_DANCER)
-		{
-			aCharredScale = 1.0f;
-		}
 
 		if (aCharredScale != 1.0f)
 		{
