@@ -270,13 +270,18 @@ std::unique_ptr<MemoryImage> ReanimatorCache::MakeCachedZombieFrame(ZombieType t
 		aUseZombieType = ZombieType::ZOMBIE_POLEVAULTER;
 	}
 	const ZombieDefinition& aZombieDef = GetZombieDefinition(aUseZombieType);
-	PVZP_ASSERT(aZombieDef.mReanimationType != ReanimationType::REANIM_NONE);
+	ReanimationType aReanimType = aZombieDef.mReanimationType;
+	if (aUseZombieType == ZombieType::ZOMBIE_DANCER)
+		aReanimType = mApp->mThrillerMode ? ReanimationType::REANIM_DANCER_JACKSON : ReanimationType::REANIM_DANCER_DISCO;
+	else if (aUseZombieType == ZombieType::ZOMBIE_BACKUP_DANCER)
+		aReanimType = mApp->mThrillerMode ? ReanimationType::REANIM_BACKUP_DANCER_JACKSON : ReanimationType::REANIM_BACKUP_DANCER_DISCO;
+	PVZP_ASSERT(aReanimType != ReanimationType::REANIM_NONE);
 
 	float aPosX = 40.0f, aPosY = 40.0f;
-	if (aZombieDef.mReanimationType == ReanimationType::REANIM_ZOMBIE)
+	if (aReanimType == ReanimationType::REANIM_ZOMBIE)
 	{
 		Reanimation aReanim;
-		aReanim.ReanimationInitializeType(aPosX, aPosY, aZombieDef.mReanimationType);
+		aReanim.ReanimationInitializeType(aPosX, aPosY, aReanimType);
 		aReanim.SetFramesForLayer("anim_idle");
 		Zombie::SetupReanimLayers(&aReanim, aUseZombieType);
 
@@ -291,10 +296,10 @@ std::unique_ptr<MemoryImage> ReanimatorCache::MakeCachedZombieFrame(ZombieType t
 		}
 		aReanim.Draw(&aMemoryGraphics);
 	}
-	else if (aZombieDef.mReanimationType == ReanimationType::REANIM_BOSS)
+	else if (aReanimType == ReanimationType::REANIM_BOSS)
 	{
 		Reanimation aReanim;
-		aReanim.ReanimationInitializeType(-524.0f, -88.0f, aZombieDef.mReanimationType);
+		aReanim.ReanimationInitializeType(-524.0f, -88.0f, aReanimType);
 		aReanim.SetFramesForLayer("anim_head_idle");
 		Reanimation aReanimDriver;
 		aReanimDriver.ReanimationInitializeType(46.0f, 22.0f, ReanimationType::REANIM_BOSS_DRIVER);
@@ -327,7 +332,7 @@ std::unique_ptr<MemoryImage> ReanimatorCache::MakeCachedZombieFrame(ZombieType t
 			aPosY = 60.0f;
 		}
 
-		DrawReanimatorFrame(&aMemoryGraphics, aPosX, aPosY, aZombieDef.mReanimationType, aTrackName, DrawVariation::VARIATION_NORMAL);
+		DrawReanimatorFrame(&aMemoryGraphics, aPosX, aPosY, aReanimType, aTrackName, DrawVariation::VARIATION_NORMAL);
 	}
 	return aMemoryImage;
 }

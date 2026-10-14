@@ -379,6 +379,7 @@ public:
 	bool                            IsFireResistant();
 	void                 EnableMustache(bool theEnableMustache);
 	void                 EnableFuture(bool theEnableFuture);
+	void                 EnableThriller(bool theEnableThriller);
 	void                 EnableDance();
 	void                            BungeeDropPlant();
 	void                            RemoveButter();

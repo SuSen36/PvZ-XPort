@@ -32,6 +32,7 @@
 #include "System/PlayerInfo.h"
 #include "System/PoolEffect.h"
 #include "System/TypingCheck.h"
+#include "System/ReanimationLawn.h"
 #include "Widget/StoreScreen.h"
 #include "Widget/AwardScreen.h"
 #include "../PvzpLib/Trail.h"
@@ -180,6 +181,7 @@ Board::Board(LawnApp* theApp)
 	mDanceMode = mApp->mDanceMode;
 	mDaisyMode = mApp->mDaisyMode;
 	mSukhbirMode = mApp->mSukhbirMode;
+	mThrillerMode = mApp->mThrillerMode;
 	mShowShovel = false;
 	mToolTip = std::make_unique<ToolTipWidget>();
 	mAdvice = std::make_unique<MessageWidget>(mApp);
@@ -2620,6 +2622,10 @@ Zombie* Board::AddZombieInRow(ZombieType theZombieType, int theRow, int theFromW
 	}
 
 	bool aVariant = !Rand(5);
+	if (theZombieType == ZombieType::ZOMBIE_DANCER)
+	{
+		aVariant = mThrillerMode;
+	}
 	Zombie* aZombie = mZombies.DataArrayAlloc();
 	aZombie->ZombieInitialize(theRow, theZombieType, aVariant, nullptr, theFromWave);
 	if (theZombieType == ZombieType::ZOMBIE_BOBSLED && aZombie->IsOnBoard())
@@ -7557,6 +7563,24 @@ void Board::SetSukhbirMode(bool theEnableSukhbir)
 	mApp->mSukhbirMode = theEnableSukhbir;
 }
 
+void Board::SetThrillerMode(bool theEnableThriller)
+{
+	mApp->PlayFoley(FoleyType::FOLEY_DANCER);
+	mThrillerMode = theEnableThriller;
+	mApp->mThrillerMode = theEnableThriller;
+
+	for (Zombie* aZombie : mZombies)
+	{
+		if (aZombie->mDead)
+			continue;
+		if (aZombie->mZombieType == ZombieType::ZOMBIE_DANCER || aZombie->mZombieType == ZombieType::ZOMBIE_BACKUP_DANCER)
+			aZombie->EnableThriller(theEnableThriller);
+	}
+
+	mApp->mReanimatorCache->mZombieImages[ZombieType::ZOMBIE_DANCER].reset();
+	mApp->mReanimatorCache->mZombieImages[ZombieType::ZOMBIE_BACKUP_DANCER].reset();
+}
+
 void Board::DoTypingCheck(KeyCode theKey)
 {
 	if (mApp->mKonamiCheck->Check(theKey))
@@ -7634,6 +7658,11 @@ void Board::DoTypingCheck(KeyCode theKey)
 	if (mApp->mSukhbirCheck->Check(theKey))
 	{
 		SetSukhbirMode(!mSukhbirMode);
+		return;
+	}
+	if (mApp->mThrillerCheck->Check(theKey))
+	{
+		SetThrillerMode(!mThrillerMode);
 		return;
 	}
 }
