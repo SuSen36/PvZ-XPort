@@ -3880,7 +3880,7 @@ void Zombie::SetupReanimForLostArm(unsigned int theDamageFlags)
 			if (mVariant)
 			{
 				GetTrackPosition("Zombie_outerarm_lower", aPosX, aPosY);
-				aBodyReanim->SetImageOverride("Zombie_Jackson_outerarm_upper", IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2);
+				aBodyReanim->SetImageOverride("Zombie_Jackson_outerarm_upper", IMAGE_REANIM_ZOMBIE_JACKSON_OUTERARM_UPPER2);
 			}
 			else
 			{
@@ -3892,7 +3892,6 @@ void Zombie::SetupReanimForLostArm(unsigned int theDamageFlags)
 			if (mVariant)
 			{
 				GetTrackPosition("Zombie_outerarm_lower", aPosX, aPosY);
-				aBodyReanim->SetImageOverride("Zombie_Jackson_outerarm_upper", IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2);
 			}
 			else
 			{
