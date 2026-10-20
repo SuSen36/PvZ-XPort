@@ -2125,6 +2125,9 @@ static void FixBoardAfterLoad(Board* theBoard)
 					{
 						aBodyReanim->SetImageOverride("anim_head1", IMAGE_REANIM_ZOMBIE_GARGANTUAR_HEAD2);
 					}
+
+					if (aBodyReanim->TrackExists("Zombie_whitewater2"))
+						aZombie->SetupWaterTrack("Zombie_whitewater2");
 				}
 				break;
 			}
@@ -2189,8 +2192,47 @@ static void FixBoardAfterLoad(Board* theBoard)
 				break;
 			}
 
+			case ZombieType::ZOMBIE_SNORKEL:
+			{
+				Reanimation* aBodyReanim = theBoard->mApp->ReanimationGet(aZombie->mBodyReanimID);
+				if (aBodyReanim)
+				{
+					if (aBodyReanim->TrackExists("Zombie_snorkle_whitewater"))
+						aZombie->SetupWaterTrack("Zombie_snorkle_whitewater");
+					if (aBodyReanim->TrackExists("Zombie_snorkle_whitewater2"))
+						aZombie->SetupWaterTrack("Zombie_snorkle_whitewater2");
+				}
+				break;
+			}
+
+			case ZombieType::ZOMBIE_DOLPHIN_RIDER:
+			{
+				Reanimation* aBodyReanim = theBoard->mApp->ReanimationGet(aZombie->mBodyReanimID);
+				if (aBodyReanim)
+				{
+					if (aBodyReanim->TrackExists("zombie_dolphinrider_whitewater"))
+						aZombie->SetupWaterTrack("zombie_dolphinrider_whitewater");
+					if (aBodyReanim->TrackExists("zombie_dolphinrider_dolphininwater"))
+						aZombie->SetupWaterTrack("zombie_dolphinrider_dolphininwater");
+				}
+				break;
+			}
+
 			default:
 				break;
+			}
+
+			// The water track render group is restored from the save data, so it has to be reapplied for pool zombies
+			if ((theBoard->mPlantRow[aZombie->mRow] == PlantRowType::PLANTROW_POOL && aZombie->mFromWave != Zombie::ZOMBIE_WAVE_CUTSCENE) || aZombie->mZombieType == ZombieType::ZOMBIE_DUCKY_TUBE)
+			{
+				Reanimation* aBodyReanim = theBoard->mApp->ReanimationGet(aZombie->mBodyReanimID);
+				if (aBodyReanim)
+				{
+					if (aBodyReanim->TrackExists("Zombie_whitewater"))
+						aZombie->SetupWaterTrack("Zombie_whitewater");
+					if (aBodyReanim->TrackExists("Zombie_whitewater2"))
+						aZombie->SetupWaterTrack("Zombie_whitewater2");
+				}
 			}
 		}
 	}

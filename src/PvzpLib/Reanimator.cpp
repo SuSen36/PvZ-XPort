@@ -222,7 +222,7 @@ inline void ReanimationFillInMissingData(void*& thePrev, void*& theValue)
 
 bool ReanimationLoadDefinition(const std::string& theFileName, ReanimatorDefinition* theDefinition)
 {
-	if (!DefinitionLoadXML(theFileName, &gReanimatorDefMap, theDefinition))
+	if (!DefinitionLoadXML(theFileName, &gReanimatorDefMap, theDefinition, false))
 		return false;
 
 	for (int aTrackIndex = 0; aTrackIndex < theDefinition->mTracks.count; aTrackIndex++)
@@ -1224,6 +1224,27 @@ void ReanimatorLoadDefinitions(const ReanimationParams* theReanimationParamArray
 		if (DefinitionIsCompiled(aReanimationParams->mReanimFileName))
 			ReanimatorEnsureDefinitionLoaded(aReanimationParams->mReanimationType, true);
 	}
+}
+
+void ReanimatorCompileAllDefinitions()
+{
+	PerfTimer aTimer;
+	aTimer.Start();
+	unsigned int aFailedCount = 0;
+
+	for (unsigned int i = 0; i < gReanimatorDefCount; i++)
+	{
+		const ReanimationParams* aReanimationParams = &gReanimationParamArray[i];
+		std::string aCompiledFilePath = DefinitionGetCompiledFilePathFromXMLFilePath(aReanimationParams->mReanimFileName);
+
+		// Compile into a scratch definition: the reanimator array must stay untouched.
+		ReanimatorDefinition aDefinition{};
+		if (!DefinitionCompileFile(aReanimationParams->mReanimFileName, aCompiledFilePath, &gReanimatorDefMap, &aDefinition))
+			aFailedCount++;
+		ReanimationFreeDefinition(&aDefinition);
+	}
+
+	PvzpLogLn("Compiled {} reanim definitions ({} failed) in {} ms", gReanimatorDefCount - aFailedCount, aFailedCount, (int)aTimer.GetDuration());
 }
 
 void ReanimatorFreeDefinitions()

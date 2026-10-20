@@ -96,6 +96,10 @@ void ReanimatorCache::DrawReanimatorFrame(Graphics* g, float thePosX, float theP
 	{
 		aReanim.mAnimTime = 0.15f;
 	}
+	else if (theReanimationType == ReanimationType::REANIM_GARGANTUAR)
+	{
+		aReanim.AssignRenderGroupToPrefix("Zombie_gargantuar_bottle", RENDER_GROUP_HIDDEN);
+	}
 	aReanim.AssignRenderGroupToTrack("anim_waterline", RENDER_GROUP_HIDDEN);
 
 	if (g->GetColorizeImages())

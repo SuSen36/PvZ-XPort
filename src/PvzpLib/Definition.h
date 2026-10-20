@@ -157,7 +157,7 @@ bool                    DefinitionReadImageField(XMLParser* theXmlParser, Image*
 bool                    DefinitionReadFontField(XMLParser* theXmlParser, _Font** theFont);
 bool                    DefinitionReadField(XMLParser* theXmlParser, const DefMap* theDefMap, void* theDefinition, bool* theDone);
 bool                    DefinitionWriteCompiledFile(const std::string& theCompiledFilePath, const DefMap* theDefMap, void* theDefinition);
-bool                    DefinitionCompileFile(const std::string& theXMLFilePath, const std::string& theCompiledFilePath, const DefMap* theDefMap, void* theDefinition);
+bool                    DefinitionCompileFile(const std::string& theXMLFilePath, const std::string& theCompiledFilePath, const DefMap* theDefMap, void* theDefinition, bool theWriteCompiled = true);
 
 void                    DefMapWriteToCache(void*& theWritePtr, const DefMap* theDefMap, void* theDefinition);
 void                    DefWriteToCacheString(void*& theWritePtr, const char** theValue);
@@ -187,11 +187,11 @@ inline bool             DefReadFromCacheImage(void*& theReadPtr, Image** theImag
 inline bool             DefReadFromCacheFont(void*& theReadPtr, _Font** theFont);
 inline bool             DefReadFromCacheFloatTrack(void*& theReadPtr, FloatParameterTrack* theTrack);
 bool                    DefMapReadFromCache(void*& theReadPtr, const DefMap* theDefMap, void* theDefinition);
-bool                    DefinitionCompileAndLoad(const std::string& theXMLFilePath, const DefMap* theDefMap, void* theDefinition);
+bool                    DefinitionCompileAndLoad(const std::string& theXMLFilePath, const DefMap* theDefMap, void* theDefinition, bool theCompileOnMiss = true);
 bool                    DefinitionLoadMap(XMLParser* theXmlParser, const DefMap* theDefMap, void* theDefinition);
 bool                    DefinitionLoadImage(Image** theImage, const std::string& theName);
 bool                    DefinitionLoadFont(_Font** theFont, const std::string& theName);
-bool                    DefinitionLoadXML(const std::string& theFilename, const DefMap* theDefMap, void* theDefinition);
+bool                    DefinitionLoadXML(const std::string& theFilename, const DefMap* theDefMap, void* theDefinition, bool theCompileOnMiss = true);
 void                    DefinitionFreeArrayField(DefinitionArrayDef* theArray, const DefMap* theDefMap);
 void                    DefinitionFreeMap(const DefMap* theDefMap, void* theDefinition);
 

@@ -1236,8 +1236,17 @@ void Plant::UpdateTanglekelp()
 			Zombie* aZombie = mBoard->ZombieTryToGet(mTargetZombieID);
 			if (aZombie)
 			{
-				aZombie->DragUnder();
-				aZombie->PoolSplash(false);
+				if (aZombie->mZombieType == ZombieType::ZOMBIE_GARGANTUAR ||
+					aZombie->mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
+				{
+					aZombie->TakeDamage(1200, 0U);
+					aZombie->PoolSplash(false);
+				}
+				else
+				{
+					aZombie->DragUnder();
+					aZombie->PoolSplash(false);
+				}
 			}
 		}
 
@@ -1256,7 +1265,9 @@ void Plant::UpdateTanglekelp()
 			Die();
 
 			Zombie* aZombie = mBoard->ZombieTryToGet(mTargetZombieID);
-			if (aZombie)
+			if (aZombie &&
+				aZombie->mZombieType != ZombieType::ZOMBIE_GARGANTUAR &&
+				aZombie->mZombieType != ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
 			{
 				aZombie->DieWithLoot();
 			}
@@ -2339,6 +2350,15 @@ void Plant::Squish()
 
 	if (mSeedType == SeedType::SEED_SQUASH && mState != PlantState::STATE_NOTREADY)
 		return;
+
+	if (mBoard->IsPoolSquare(mPlantCol, mRow))
+	{
+		mApp->AddReanimation(mX - 11, mY + 20, mRenderOrder + 1, ReanimationType::REANIM_SPLASH);
+		mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
+		mApp->PlaySample(SOUND_ZOMBIESPLASH);
+		Die();
+		return;
+	}
 
 	mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_GRAVE_STONE, mRow, 8);
 	mSquished = true;
@@ -4865,7 +4885,7 @@ Zombie* Plant::FindTargetZombie(int theRow, PlantWeapon thePlantWeapon)
 			}
 
 			if ((mSeedType == SeedType::SEED_EXPLODE_O_NUT && aZombie->mZombiePhase == ZombiePhase::PHASE_POLEVAULTER_IN_VAULT) ||
-				(mSeedType == SeedType::SEED_TANGLEKELP && !aZombie->mInPool))
+				(mSeedType == SeedType::SEED_TANGLEKELP && (!aZombie->mInPool)))
 			{
 				continue;
 			}
@@ -4928,7 +4948,15 @@ void Plant::Die()
 		Zombie* aZombie = mBoard->ZombieTryToGet(mTargetZombieID);
 		if (aZombie)
 		{
-			aZombie->DieWithLoot();
+			if (aZombie->mZombieType == ZombieType::ZOMBIE_GARGANTUAR ||
+				aZombie->mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
+			{
+				AttachmentReanimTypeDie(aZombie->mAttachmentID, ReanimationType::REANIM_TANGLEKELP);
+			}
+			else
+			{
+				aZombie->DieWithLoot();
+			}
 		}
 	}
 

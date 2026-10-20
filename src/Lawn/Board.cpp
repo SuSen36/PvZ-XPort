@@ -7671,7 +7671,11 @@ void Board::KeyDown(KeyCode theKey)
 {
 	DoTypingCheck(theKey);
 
-	if (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO &&
+	if (mApp->mDebugKeysEnabled && theKey == KeyCode::KEYCODE_F5)
+	{
+		ReanimatorCompileAllDefinitions();
+	}
+	else if (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO &&
 		mApp->mGameMode != GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN &&
 		mApp->mGameMode != GameMode::GAMEMODE_TREE_OF_WISDOM)
 	{

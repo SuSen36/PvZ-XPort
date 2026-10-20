@@ -41,9 +41,12 @@
 #include "../PvzpLib/PvzpDebug.h"
 #include "../PvzpLib/PvzpCommon.h"
 #include "../PvzpLib/Reanimator.h"
+#include "../PvzpLib/ReanimAtlas.h"
 #include "../PvzpLib/Attachment.h"
 #include "../PvzpLib/PvzpParticle.h"
+#include "graphics/MemoryImage.h"
 #include <algorithm>
+#include <vector>
 
 constexpr const int ZOMBIE_START_RANDOM_OFFSET = 40;
 constexpr const int BUNGEE_ZOMBIE_HEIGHT = 3000;
@@ -56,6 +59,9 @@ constexpr const int RENDER_GROUP_BOSS_FRONT_LEG = 5;
 constexpr const int RENDER_GROUP_BOSS_BACK_ARM = 6;
 constexpr const int RENDER_GROUP_BOSS_FIREBALL_ADDITIVE = 7;
 constexpr const int RENDER_GROUP_BOSS_FIREBALL_TOP = 8;
+constexpr const int RENDER_GROUP_WATERLINE = 9;
+constexpr const int POOL_SURFACE_X = 34;
+constexpr const int POOL_SURFACE_Y = 278;
 constexpr const int ZOMBIE_LIMP_SPEED_FACTOR = 2;
 constexpr const int POGO_BOUNCE_TIME = 80;
 constexpr const int DOLPHIN_JUMP_TIME = 120;
@@ -436,9 +442,14 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
 
 		int aPoleHit = Rand(100);
 		int aPoleVariant;
+		bool aWaterWeapon = IsOnBoard() && mBoard->mPlantRow[mRow] == PlantRowType::PLANTROW_POOL;
 		if (!IsOnBoard() || mBoard->mLevel == 48)
 		{
 			aPoleVariant = 0;
+		}
+		else if (aWaterWeapon)
+		{
+			aPoleVariant = aPoleHit < 65 ? 3 : 4;
 		}
 		else
 		{
@@ -454,6 +465,33 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
 		{
 			aBodyReanim->SetImageOverride("Zombie_gargantuar_telephonepole", IMAGE_REANIM_ZOMBIE_GARGANTUAR_DUCKXING);
 		}
+		else if (aPoleVariant == 3)
+		{
+			aBodyReanim->SetImageOverride("Zombie_gargantuar_telephonepole", IMAGE_REANIM_ZOMBIE_GARGANTUAR_ANCHOR);
+		}
+		else if (aPoleVariant == 4)
+		{
+			aBodyReanim->SetImageOverride("Zombie_gargantuar_telephonepole", IMAGE_REANIM_ZOMBIE_GARGANTUAR_SHARK);
+		}
+
+		if (aWaterWeapon)
+		{
+			ReanimShowPrefix("Zombie_gargantuar_bottle", RENDER_GROUP_NORMAL);
+			ReanimIgnoreClipRect("Zombie_gargantuar_bottle", true);
+			SetupWaterTrack("Zombie_gargantuar_bottle_whitewater");
+			ReanimIgnoreClipRect("Zombie_gargantuar_telephonepole", true);
+			ReanimIgnoreClipRect("Zombie_gargantuar_outerarm_upper", true);
+			ReanimIgnoreClipRect("Zombie_gargantuar_outerarm_lower", true);
+			ReanimIgnoreClipRect("Zombie_gargantuar_outerarm_hand", true);
+			ReanimIgnoreClipRect("Zombie_gargantuar_innerarm_upper", true);
+			ReanimIgnoreClipRect("Zombie_gargantuar_innerarm_lower", true);
+			ReanimIgnoreClipRect("Zombie_gargantuar_innerarm_hand", true);
+			ReanimIgnoreClipRect("Zombie_gargantuar_innerarm_thumb", true);
+		}
+		else
+		{
+			ReanimShowPrefix("Zombie_gargantuar_bottle", RENDER_GROUP_HIDDEN);
+		}
 
 		if (mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
 		{
@@ -461,6 +499,7 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
 			mBodyHealth = 6000;
 		}
 
+		SetupWaterTrack("Zombie_whitewater2");
 		break;
 	}
 
@@ -936,6 +975,7 @@ void Zombie::SetupReanimLayers(Reanimation* aReanim, ZombieType theZombieType)
 	aReanim->AssignRenderGroupToPrefix("anim_screendoor", RENDER_GROUP_HIDDEN);
 	aReanim->AssignRenderGroupToPrefix("Zombie_flaghand", RENDER_GROUP_HIDDEN);
 	aReanim->AssignRenderGroupToPrefix("Zombie_duckytube", RENDER_GROUP_HIDDEN);
+	aReanim->AssignRenderGroupToPrefix("Zombie_gargantuar_bottle", RENDER_GROUP_HIDDEN);
 	aReanim->AssignRenderGroupToPrefix("anim_tongue", RENDER_GROUP_HIDDEN);
 	aReanim->AssignRenderGroupToPrefix("Zombie_mustache", RENDER_GROUP_HIDDEN);
 	SetupDoorArms(aReanim, false);
@@ -2220,7 +2260,8 @@ void Zombie::UpdateZombieGargantuar()
 	if (IsImmobilizied() || !mHasHead)
 		return;
 
-	if (mHasObject && mBodyHealth < mBodyMaxHealth / 2 && aThrowingDistance > 40.0f)
+	bool aInPoolRow = IsOnBoard() && mBoard->mPlantRow[mRow] == PlantRowType::PLANTROW_POOL;
+	if (mHasObject && mBodyHealth < mBodyMaxHealth / 2 && aThrowingDistance > 40.0f && !aInPoolRow)
 	{
 		mZombiePhase = ZombiePhase::PHASE_GARGANTUAR_THROWING;
 		PlayZombieReanim("anim_throw", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 24.0f);
@@ -2275,11 +2316,18 @@ void Zombie::UpdateZombieGargantuar()
 	}
 #endif
 
-	if (doSmash)
+	if (doSmash && mZombieHeight != ZombieHeight::HEIGHT_IN_TO_POOL)
 	{
 		mZombiePhase = ZombiePhase::PHASE_GARGANTUAR_SMASHING;
 		mApp->PlayFoley(FoleyType::FOLEY_LOW_GROAN);
-		PlayZombieReanim("anim_smash", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 16.0f);
+		if (mInPool)
+		{
+			PlayZombieReanim("anim_swim_smash", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 16.0f);
+		}
+		else
+		{
+			PlayZombieReanim("anim_smash", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 16.0f);
+		}
 	}
 }
 
@@ -3062,7 +3110,6 @@ void Zombie::UpdateZombieRiseFromGrave()
 		if (mInPool)
 		{
 			ReanimIgnoreClipRect("Zombie_duckytube", true);
-			ReanimIgnoreClipRect("Zombie_whitewater", true);
 			ReanimIgnoreClipRect("Zombie_outerarm_hand", true);
 			ReanimIgnoreClipRect("Zombie_innerarm3", true);
 		}
@@ -5862,6 +5909,27 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
 		aBodyReanim->DrawRenderGroup(g, theBaseRenderGroup);
 	}
 
+	// Drawn in this pass: as a separate render item the waterline would be z-ordered behind this zombie's own body
+	// Enforced here because the ignore-clip state is toggled elsewhere (rise from grave, restored save data)
+	bool aHasWaterline = false;
+	for (int aTrackIndex = 0; aTrackIndex < aBodyReanim->mDefinition->mTracks.count; aTrackIndex++)
+	{
+		ReanimatorTrackInstance* aTrackInstance = &aBodyReanim->mTrackInstances[aTrackIndex];
+		if (aTrackInstance->mRenderGroup == RENDER_GROUP_WATERLINE)
+		{
+			aHasWaterline = true;
+			aTrackInstance->mIgnoreClipRect = false;
+		}
+	}
+
+	if (aHasWaterline)
+	{
+		Rect aOldClipRect = g->mClipRect;
+		g->SetClipRect(Rect(POOL_SURFACE_X - g->mTransX, POOL_SURFACE_Y - g->mTransY, IMAGE_POOL->GetWidth(), IMAGE_POOL->GetHeight()));
+		aBodyReanim->DrawRenderGroup(g, RENDER_GROUP_WATERLINE);
+		g->mClipRect = aOldClipRect;  // SetClipRect would apply the graphics translation a second time
+	}
+
 	if (mShieldType != ShieldType::SHIELDTYPE_NONE)
 	{
 		if (mZombiePhase == ZombiePhase::PHASE_ZOMBIE_BURNED)
@@ -6231,6 +6299,12 @@ void Zombie::GetDrawPos(ZombieDrawPosition& theDrawPos)
 		{
 			theDrawPos.mClipHeight += 7.0f;
 		}
+
+		if (mZombiePhase == ZombiePhase::PHASE_ZOMBIE_DYING &&
+			(mZombieType == ZombieType::ZOMBIE_GARGANTUAR || mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR))
+		{
+			theDrawPos.mClipHeight = -mAltitude + 5.0f;
+		}
 	}
 	else if (mZombiePhase == ZombiePhase::PHASE_DANCER_RISING)
 	{
@@ -6273,6 +6347,7 @@ void Zombie::GetDrawPos(ZombieDrawPosition& theDrawPos)
 		theDrawPos.mClipHeight = CLIP_HEIGHT_OFF;
 	}
 }
+
 
 int Zombie::GetDancerFrame()
 {
@@ -8404,7 +8479,9 @@ bool Zombie::ZombieTypeCanGoInPool(ZombieType theZombieType)
 		theZombieType == ZombieType::ZOMBIE_WALLNUT_HEAD ||
 		theZombieType == ZombieType::ZOMBIE_JALAPENO_HEAD ||
 		theZombieType == ZombieType::ZOMBIE_GATLING_HEAD ||
-		theZombieType == ZombieType::ZOMBIE_TALLNUT_HEAD;
+		theZombieType == ZombieType::ZOMBIE_TALLNUT_HEAD ||
+		theZombieType == ZombieType::ZOMBIE_GARGANTUAR ||
+		theZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR;
 }
 
 bool Zombie::ZombieTypeCanGoOnHighGround(ZombieType theZombieType)
@@ -9122,7 +9199,21 @@ void Zombie::PlayDeathAnim(unsigned int theDamageFlags)
 	const char* aDeathTrackName = "anim_death";
 	int aDeathAnimHit = Rand(100);
 	bool aCanDoSuperLongDeath = mApp->HasFinishedAdventure() || mBoard->mLevel > 5;
-	if (mInPool && aBodyReanim->TrackExists("anim_waterdeath"))
+	if (mInPool && aBodyReanim->TrackExists("anim_swim_death"))
+	{
+		aDeathTrackName = "anim_swim_death";
+		ReanimIgnoreClipRect("Zombie_gargantuar_bottle", false);
+		ReanimShowTrack("Zombie_gargantuar_bottle_whitewater", RENDER_GROUP_HIDDEN);
+		ReanimIgnoreClipRect("Zombie_gargantuar_telephonepole", false);
+		ReanimIgnoreClipRect("Zombie_gargantuar_outerarm_upper", false);
+		ReanimIgnoreClipRect("Zombie_gargantuar_outerarm_lower", false);
+		ReanimIgnoreClipRect("Zombie_gargantuar_outerarm_hand", false);
+		ReanimIgnoreClipRect("Zombie_gargantuar_innerarm_upper", false);
+		ReanimIgnoreClipRect("Zombie_gargantuar_innerarm_lower", false);
+		ReanimIgnoreClipRect("Zombie_gargantuar_innerarm_hand", false);
+		ReanimIgnoreClipRect("Zombie_gargantuar_innerarm_thumb", false);
+	}
+	else if (mInPool && aBodyReanim->TrackExists("anim_waterdeath"))
 	{
 		aDeathTrackName = "anim_waterdeath";
 		ReanimIgnoreClipRect("Zombie_duckytube", false);
@@ -10876,5 +10967,7 @@ void Zombie::SetupWaterTrack(const char* theTrackName)
 	ReanimatorTrackInstance* aTrackInstance = aBodyReanim->GetTrackInstanceByName(theTrackName);
 	aTrackInstance->mIgnoreExtraAdditiveColor = true;
 	aTrackInstance->mIgnoreColorOverride = true;
-	aTrackInstance->mIgnoreClipRect = true;
+	aTrackInstance->mIgnoreClipRect = false;
+	// Drawn in its own pass clipped to the pool surface
+	aBodyReanim->AssignRenderGroupToTrack(theTrackName, RENDER_GROUP_WATERLINE);
 }

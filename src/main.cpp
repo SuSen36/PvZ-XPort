@@ -22,6 +22,7 @@
 #include "LawnApp.h"
 #include "Resources.h"
 #include "PvzpLib/PvzpStringFile.h"
+#include "PvzpLib/PvzpDebug.h"
 #include <cstdlib>
 #include <vector>
 using namespace Sexy;

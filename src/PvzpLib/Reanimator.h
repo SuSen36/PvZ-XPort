@@ -107,6 +107,7 @@ bool                                ReanimationLoadDefinition(const std::string&
 void                                ReanimationFreeDefinition(ReanimatorDefinition* theDefinition);
 void                                ReanimatorEnsureDefinitionLoaded(ReanimationType theReanimType, bool theIsPreloading);
 void                                ReanimatorLoadDefinitions(const ReanimationParams* theReanimationParamArray, int theReanimationParamArraySize);
+void                                ReanimatorCompileAllDefinitions();
 void                                ReanimatorFreeDefinitions();
 
 extern const ReanimationParams gLawnReanimationArray[static_cast<int>(ReanimationType::NUM_REANIMS)];

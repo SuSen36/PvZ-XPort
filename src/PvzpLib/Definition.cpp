@@ -370,9 +370,9 @@ bool DefinitionLoadFont(_Font** theFont, const std::string& theName)
 	return aFont != nullptr;
 }
 
-bool DefinitionLoadXML(const std::string& theFileName, const DefMap* theDefMap, void* theDefinition)
+bool DefinitionLoadXML(const std::string& theFileName, const DefMap* theDefMap, void* theDefinition, bool theCompileOnMiss)
 {
-	return DefinitionCompileAndLoad(theFileName, theDefMap, theDefinition);
+	return DefinitionCompileAndLoad(theFileName, theDefMap, theDefinition, theCompileOnMiss);
 }
 
 inline bool DefReadFromCacheArray(void*& theReadPtr, DefinitionArrayDef* theArray, const DefMap* theDefMap)
@@ -1273,7 +1273,7 @@ bool DefinitionWriteCompiledFile(const std::string& theCompiledFilePath, const D
 	return false;
 }
 
-bool DefinitionCompileFile(const std::string& theXMLFilePath, const std::string& theCompiledFilePath, const DefMap* theDefMap, void* theDefinition)
+bool DefinitionCompileFile(const std::string& theXMLFilePath, const std::string& theCompiledFilePath, const DefMap* theDefMap, void* theDefinition, bool theWriteCompiled)
 {
 	XMLParser aXMLParser = XMLParser();
 	if (!aXMLParser.OpenFile(theXMLFilePath))
@@ -1284,10 +1284,12 @@ bool DefinitionCompileFile(const std::string& theXMLFilePath, const std::string&
 	else if (!DefinitionLoadMap(&aXMLParser, theDefMap, theDefinition))
 		return false;
 
+	if (!theWriteCompiled)
+		return true;
 	return DefinitionWriteCompiledFile(theCompiledFilePath, theDefMap, theDefinition);
 }
 
-bool DefinitionCompileAndLoad(const std::string& theXMLFilePath, const DefMap* theDefMap, void* theDefinition)
+bool DefinitionCompileAndLoad(const std::string& theXMLFilePath, const DefMap* theDefMap, void* theDefinition, bool theCompileOnMiss)
 {
 #ifdef PVZ_DEBUG
 	const bool aRequireCompiledUpToDate = true;
@@ -1297,7 +1299,8 @@ bool DefinitionCompileAndLoad(const std::string& theXMLFilePath, const DefMap* t
 
 	std::string aCompiledFilePath = DefinitionGetCompiledFilePathFromXMLFilePath(theXMLFilePath);
 
-	const bool aShouldTryCompiled = !aRequireCompiledUpToDate || DefinitionIsCompiled(theXMLFilePath);
+	// Cache-only callers must skip the up-to-date check, or the cache compile key writes is never read in debug builds.
+	const bool aShouldTryCompiled = !theCompileOnMiss || !aRequireCompiledUpToDate || DefinitionIsCompiled(theXMLFilePath);
 	if (aShouldTryCompiled && DefinitionReadCompiledFile(aCompiledFilePath, theDefMap, theDefinition))
 	{
 		return true;
@@ -1305,8 +1308,9 @@ bool DefinitionCompileAndLoad(const std::string& theXMLFilePath, const DefMap* t
 
 	PerfTimer aTimer;
 	aTimer.Start();
-	bool aResult = DefinitionCompileFile(theXMLFilePath, aCompiledFilePath, theDefMap, theDefinition);
-	PvzpLogLn("compile {} ms:'{}'", (int)aTimer.GetDuration(), aCompiledFilePath);
+	bool aResult = DefinitionCompileFile(theXMLFilePath, aCompiledFilePath, theDefMap, theDefinition, theCompileOnMiss);
+	if (theCompileOnMiss)
+		PvzpLogLn("compile {} ms:'{}'", (int)aTimer.GetDuration(), aCompiledFilePath);
 	if (aResult)
 		return true;
 
