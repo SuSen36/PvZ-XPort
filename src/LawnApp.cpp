@@ -124,6 +124,7 @@ LawnApp::LawnApp()
 	mDanceMode = false;
 	mDaisyMode = false;
 	mSukhbirMode = false;
+	mKhrushchevMode = false;
 	mGameScene = GameScenes::SCENE_LOADING;
 	mCloseRequest = false;
 	mWidth = BOARD_WIDTH;
@@ -1238,6 +1239,7 @@ void LawnApp::Init()
 	mDanceCheck = std::make_unique<TypingCheck>("dance");
 	mDaisyCheck = std::make_unique<TypingCheck>("daisies");
 	mSukhbirCheck = std::make_unique<TypingCheck>("sukhbir");
+	mKhrushchevCheck = std::make_unique<TypingCheck>("khrushchev");
 
 #ifdef PVZ_DEBUG
 	aDuration = mTimer.GetDuration();

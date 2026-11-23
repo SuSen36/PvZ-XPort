@@ -1665,6 +1665,11 @@ void Plant::UpdateUmbrella()
 	}
 }
 
+int Plant::GetKhrushchevScanCol()
+{
+	return mPlantCol + 1 + (mLaunchRate - mLaunchCounter) * (MAX_GRID_SIZE_X - mPlantCol - 1) / mLaunchRate;
+}
+
 void Plant::UpdateCobCannon()
 {
 	if (mState == PlantState::STATE_COBCANNON_ARMING)
@@ -1685,6 +1690,10 @@ void Plant::UpdateCobCannon()
 		if (aBodyReanim->mLoopCount > 0)
 		{
 			mState = PlantState::STATE_COBCANNON_READY;
+			if (mBoard->mKhrushchevMode)
+			{
+				mLaunchCounter = mLaunchRate;
+			}
 			PlayIdleAnim(12.0f);
 		}
 	}
@@ -1693,6 +1702,40 @@ void Plant::UpdateCobCannon()
 		Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
 		ReanimatorTrackInstance* aCobTrack = aBodyReanim->GetTrackInstanceByName("CobCannon_cob");
 		aCobTrack->mTrackColor = GetFlashingColor(mBoard->mMainCounter, 75);
+
+		if (mBoard->mKhrushchevMode)
+		{
+			mLaunchCounter--;
+			if (mLaunchCounter <= 0)
+			{
+				mLaunchCounter = mLaunchRate - Sexy::Rand(15);
+			}
+
+			int aScanCol = GetKhrushchevScanCol();
+			int aCellX = mBoard->GridToPixelX(aScanCol, mRow);
+			bool aTargetFound = false;
+
+			for (Zombie* aZombie : mBoard->mZombies)
+			{
+				if (aZombie->mDead)
+					continue;
+				if (aZombie->mRow != mRow && aZombie->mZombieType != ZombieType::ZOMBIE_BOSS)
+					continue;
+
+				Rect aZombieRect = aZombie->GetZombieRect();
+				int aZombieCenterX = aZombieRect.mX + aZombieRect.mWidth / 2;
+				if (aZombieCenterX >= aCellX && aZombieCenterX < aCellX + 80)
+				{
+					aTargetFound = true;
+					break;
+				}
+			}
+
+			if (aTargetFound)
+			{
+				CobCannonFire(aCellX + 40, mBoard->GridToPixelY(aScanCol, mRow) + 40);
+			}
+		}
 	}
 	else if (mState == PlantState::STATE_COBCANNON_FIRING)
 	{
@@ -4186,7 +4229,7 @@ void Plant::MouseDown(int x, int y, int theClickCount)
 	if (theClickCount < 0)
 		return;
 
-	if (mState == PlantState::STATE_COBCANNON_READY)
+	if (mState == PlantState::STATE_COBCANNON_READY && !mBoard->mKhrushchevMode)
 	{
 		mBoard->ClearCursor();
 		mBoard->mCursorObject->mType = SeedType::SEED_NONE;

@@ -180,6 +180,7 @@ Board::Board(LawnApp* theApp)
 	mDanceMode = mApp->mDanceMode;
 	mDaisyMode = mApp->mDaisyMode;
 	mSukhbirMode = mApp->mSukhbirMode;
+	mKhrushchevMode = mApp->mKhrushchevMode;
 	mShowShovel = false;
 	mToolTip = std::make_unique<ToolTipWidget>();
 	mAdvice = std::make_unique<MessageWidget>(mApp);
@@ -2968,7 +2969,7 @@ void Board::UpdateCursor(const HitResult* theHitResult)
 		{
 			aShowFinger = true;
 		}
-		if (((Plant*)theHitResult->mObject)->mState == PlantState::STATE_COBCANNON_READY)
+		if (((Plant*)theHitResult->mObject)->mState == PlantState::STATE_COBCANNON_READY && !mKhrushchevMode)
 		{
 			aShowFinger = true;
 		}
@@ -3563,6 +3564,12 @@ void Board::UpdateToolTip(const HitResult* theHitResult)
 
 void Board::MouseDownCobcannonFire(int x, int y, int theClickCount)
 {
+	if (mKhrushchevMode)
+	{
+		ClearCursor();
+		return;
+	}
+
 	if (theClickCount >= 0 && y >= 80)
 	{
 		if (mCobCannonCursorDelayCounter > 0 && Distance2D(x, y, mCobCannonMouseX, mCobCannonMouseY) < 100.0f)
@@ -7430,6 +7437,24 @@ void Board::DrawUITop(Graphics* g)
 		mCursorObject->EndDraw(g);
 	}
 
+	if (mKhrushchevMode)
+	{
+		g->SetColorizeImages(true);
+		for (Plant* aPlant : mPlants)
+		{
+			if (aPlant->mDead || aPlant->mSeedType != SeedType::SEED_COBCANNON || aPlant->mState != PlantState::STATE_COBCANNON_READY)
+				continue;
+
+			int aScanCol = aPlant->GetKhrushchevScanCol();
+			// cell center stands in for the mouse position; offsets match the CursorObject reticle draw
+			int aPosX = GridToPixelX(aScanCol, aPlant->mRow) + 4;
+			int aPosY = GridToPixelY(aScanCol, aPlant->mRow) + 12;
+			g->SetColor(GetFlashingColor(mMainCounter, 75));
+			g->DrawImageCel(IMAGE_COBCANNON_TARGET, aPosX, aPosY, 0);
+		}
+		g->SetColorizeImages(false);
+	}
+
 	mToolTip->Draw(g);
 	DrawDebugText(g);
 	DrawDebugObjectRects(g);
@@ -7544,6 +7569,27 @@ void Board::SetSukhbirMode(bool theEnableSukhbir)
 	mApp->mSukhbirMode = theEnableSukhbir;
 }
 
+void Board::SetKhrushchevMode(bool theEnableAuto)
+{
+	mApp->PlayFoley(FoleyType::FOLEY_COB_LAUNCH);
+	mKhrushchevMode = theEnableAuto;
+	mApp->mKhrushchevMode = theEnableAuto;
+
+	if (theEnableAuto)
+	{
+		for (Plant* aPlant : mPlants)
+		{
+			if (aPlant->mSeedType == SeedType::SEED_COBCANNON)
+				aPlant->mLaunchCounter = aPlant->mLaunchRate;
+		}
+
+		if (mCursorObject->mCursorType == CursorType::CURSOR_TYPE_COBCANNON_TARGET)
+		{
+			ClearCursor();
+		}
+	}
+}
+
 void Board::DoTypingCheck(KeyCode theKey)
 {
 	if (mApp->mKonamiCheck->Check(theKey))
@@ -7621,6 +7667,11 @@ void Board::DoTypingCheck(KeyCode theKey)
 	if (mApp->mSukhbirCheck->Check(theKey))
 	{
 		SetSukhbirMode(!mSukhbirMode);
+		return;
+	}
+	if (mApp->mKhrushchevCheck->Check(theKey))
+	{
+		SetKhrushchevMode(!mKhrushchevMode);
 		return;
 	}
 }
@@ -7995,6 +8046,14 @@ void Board::KeyChar(char theChar)
 			RemoveAllZombies();
 			FadeOutLevel();
 			mBoardFadeOutCounter = 200;
+		}
+	}
+	else if (theChar >= '0' && theChar <= '9')
+	{
+		if (mApp->mGameScene == GameScenes::SCENE_PLAYING)
+		{
+			ZombieType aNewZombieType = static_cast<ZombieType>(static_cast<int>(ZombieType::ZOMBIE_NEW_1) + (theChar - '0'));
+			AddZombie(aNewZombieType, Zombie::ZOMBIE_WAVE_DEBUG);
 		}
 	}
 	else if (theChar == '8')

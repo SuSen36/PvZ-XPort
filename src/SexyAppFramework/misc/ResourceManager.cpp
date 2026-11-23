@@ -34,6 +34,7 @@
 #include "imagelib/ImageLib.h"
 //#define SEXY_PERF_ENABLED
 #include "PerfTimer.h"
+#include "../../PvzpLib/PvzpDebug.h"
 
 using namespace Sexy;
 
@@ -692,7 +693,10 @@ bool ResourceManager::DoLoadImage(ImageRes *theRes)
 	GLImage* aGLImage = (GLImage*) aSharedImageRef;
 
 	if (aGLImage == nullptr)
+	{
+		PvzpLogLn("DBG DoLoadImage FAILED for path='{}'", theRes->mPath);
 		return Fail(std::format("Failed to load image: {}", theRes->mPath));
+	}
 
 	if (isNew)
 	{
@@ -1068,6 +1072,12 @@ SharedImageRef ResourceManager::GetImageThrow(const std::string &theId)
 
 		if (mAllowMissingProgramResources && aRes->mFromProgram)
 			return nullptr;
+
+		PvzpLogLn("DBG GetImageThrow '{}' in map but mImage is null, path='{}', group='{}'", theId, aRes->mPath, aRes->mResGroup);
+	}
+	else
+	{
+		PvzpLogLn("DBG GetImageThrow '{}' NOT in image map, map size={}", theId, mImageMap.size());
 	}
 
 

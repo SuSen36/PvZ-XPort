@@ -1046,6 +1046,12 @@ void GameSelector::KeyDown(KeyCode theKey)
 		mApp->mSukhbirMode = !mApp->mSukhbirMode;
 		return;
 	}
+	if (mApp->mKhrushchevCheck->Check(theKey))
+	{
+		mApp->PlayFoley(FoleyType::FOLEY_COB_LAUNCH);
+		mApp->mKhrushchevMode = !mApp->mKhrushchevMode;
+		return;
+	}
 }
 
 void GameSelector::KeyChar(char theChar)
