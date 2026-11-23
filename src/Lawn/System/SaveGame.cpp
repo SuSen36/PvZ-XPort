@@ -1590,6 +1590,7 @@ enum BoardBaseFieldId : uint32_t
 	BOARD_FIELD_DIAMONDS_COLLECTED,
 	BOARD_FIELD_POTTED_PLANTS_COLLECTED,
 	BOARD_FIELD_CHOCOLATE_COLLECTED,
+	BOARD_FIELD_KHRUSHCHEV_MODE,
 	BOARD_FIELD_COUNT
 };
 
@@ -1704,6 +1705,7 @@ static constexpr BoardBaseFieldEntry gBoardBaseFields[] = {
 	{ BOARD_FIELD_DIAMONDS_COLLECTED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mDiamondsCollected); } },
 	{ BOARD_FIELD_POTTED_PLANTS_COLLECTED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mPottedPlantsCollected); } },
 	{ BOARD_FIELD_CHOCOLATE_COLLECTED, [](PortableSaveContext& c, Board* theBoard){ c.SyncUInt32(theBoard->mChocolateCollected); } },
+	{ BOARD_FIELD_KHRUSHCHEV_MODE, [](PortableSaveContext& c, Board* theBoard){ c.SyncBool(theBoard->mKhrushchevMode); } },
 };
 
 // The enum is contiguous starting at 1: the table must cover every id, in id order, so readers can index it directly.

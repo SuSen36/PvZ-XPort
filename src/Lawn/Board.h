@@ -225,6 +225,7 @@ public:
 	bool							mDaisyMode;
 	bool							mSukhbirMode;
 	bool							mThrillerMode;
+	bool							mKhrushchevMode;
 	BoardResult						mPrevBoardResult;
 	int32_t							mTriggeredLawnMowers;
 	uint32_t						mPlayTimeActiveLevel;
@@ -492,6 +493,7 @@ public:
 	void							SetDaisyMode(bool theEnableDaisy);
 	void							SetSukhbirMode(bool theEnableSukhbir);
 	void							SetThrillerMode(bool theEnableThriller);
+	void							SetKhrushchevMode(bool theEnableAuto);
 	bool							MouseHitTestPlant(int x, int y, HitResult* theHitResult);
 
 	Reanimation*			CreateRakeReanim(float theRakeX, float theRakeY, int theRenderOrder);

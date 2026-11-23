@@ -127,6 +127,7 @@ public:
 	std::unique_ptr<TypingCheck>	mDaisyCheck;
 	std::unique_ptr<TypingCheck>	mSukhbirCheck;
 	std::unique_ptr<TypingCheck>	mThrillerCheck;
+	std::unique_ptr<TypingCheck>	mKhrushchevCheck;
 	bool							mMustacheMode;
 	bool							mSuperMowerMode;
 	bool							mFutureMode;
@@ -135,6 +136,7 @@ public:
 	bool							mDaisyMode;
 	bool							mSukhbirMode;
 	bool							mThrillerMode;
+	bool							mKhrushchevMode;
 	TrialType						mTrialType;
 	bool							mDebugTrialLocked;
 	bool							mMuteSoundsForCutscene;

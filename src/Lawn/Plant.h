@@ -292,6 +292,7 @@ public:
 	bool                    IsUpgradableTo(SeedType theUpgradedType);
 	bool                    IsPartOfUpgradableTo(SeedType theUpgradedType);
 	void                    UpdateCobCannon();
+	int                     GetKhrushchevScanCol();
 	void                    CobCannonFire(int theTargetX, int theTargetY);
 	void                    UpdateGoldMagnetShroom();
 	bool         IsOnBoard();
